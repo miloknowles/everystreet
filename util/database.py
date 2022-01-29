@@ -49,6 +49,16 @@ def get_activities():
 
 #===============================================================================
 
+def get_activities_id_set():
+  """
+  Get a set of all IDs in the database.
+  """
+  items = get_activities()
+
+  return set([item['id'] for item in items.values()])
+
+#===============================================================================
+
 def update_stats():
   """
   Re-compute stats over the database.
@@ -59,13 +69,16 @@ def update_stats():
 
   total_distance = 0
   total_time = 0
+  total_elevation_gain = 0
   for item in items.values():
     total_distance += 0.621371 * item['distance'] / 1000
     total_time += item['moving_time'] / 3600.0
+    total_elevation_gain += item['total_elevation_gain']
 
   pdict = {
     'total_distance': total_distance,
     'total_activities': total_activities,
+    'total_elevation_gain': total_elevation_gain,
     'avg_distance': total_distance / total_activities,
     'total_time': total_time
   }
