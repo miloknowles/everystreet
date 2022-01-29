@@ -63,3 +63,28 @@ def get_athlete_activities(access_token, before_time=None, after_time=None, page
   response = requests.get(activites_url, headers=header, params=param).json()
 
   return response
+
+
+def get_athlete_activity_ids(access_token, before_time=None, after_time=None):
+  """
+  Returns the IDs of all activities within the query times.
+  """
+  per_page = 30
+  page_index = 1
+
+  id_list = []
+  current_page = []
+
+  while (len(current_page) >= per_page or page_index == 1):
+    print('Fetching page {} of activities'.format(page_index))
+    current_page = get_athlete_activities(access_token,
+                                          before_time=before_time,
+                                          after_time=after_time,
+                                          page=page_index,
+                                          per_page=per_page)
+    page_index += 1
+
+    for activity in current_page:
+      id_list.append(activity['id'])
+
+  return id_list
