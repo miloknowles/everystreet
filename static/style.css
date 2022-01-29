@@ -15,7 +15,11 @@ h3 {
 
 /* NOTE: Hardcoded navbar height here. */
 #map {
-  height: calc(100vh - 70px);
+  height: calc(100vh - 60px);
+}
+
+.no-padding {
+  padding: 0px;
 }
 
 .nav-link {

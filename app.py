@@ -109,5 +109,21 @@ def compute_stats():
 
 #===============================================================================
 
+@app.route('/action/activity/<id>')
+def activity_json(id):
+  """
+  Get the json for an activity (debugging).
+  """
+  try:
+    token = strava.get_token_always_valid()
+    r = strava.get_activity_by_id(token, id)
+    return jsonify(r), 200
+
+  except Exception as e:
+    logging.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+#===============================================================================
+
 if __name__ == "__main__":
   app.run(port=5001, debug=True)
