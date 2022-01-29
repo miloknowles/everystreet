@@ -1,5 +1,6 @@
 import requests
 import urllib3
+import os, sys, csv
 from calendar import timegm
 from datetime import date
 
@@ -65,7 +66,7 @@ def get_athlete_activities(access_token, before_time=None, after_time=None, page
   return response
 
 
-def get_athlete_activity_ids(access_token, before_time=None, after_time=None):
+def get_athlete_activity_ids(access_token, before_time=None, after_time=None, verbose=True):
   """
   Returns the IDs of all activities within the query times.
   """
@@ -75,8 +76,9 @@ def get_athlete_activity_ids(access_token, before_time=None, after_time=None):
   id_list = []
   current_page = []
 
-  while (len(current_page) >= per_page or page_index == 1):
-    print('Fetching page {} of activities'.format(page_index))
+  while (len(current_page) > 0 or page_index == 1):
+    if verbose:
+      print('Fetching page {} of activities'.format(page_index))
     current_page = get_athlete_activities(access_token,
                                           before_time=before_time,
                                           after_time=after_time,
@@ -88,3 +90,23 @@ def get_athlete_activity_ids(access_token, before_time=None, after_time=None):
       id_list.append(activity['id'])
 
   return id_list
+
+
+def download_polylines(access_token, before_time=None, after_time=None, verbose=True):
+  """
+  https://www.markhneedham.com/blog/2017/04/29/leaflet-strava-polylines-osm/
+  """
+  id_list = get_athlete_activity_ids(access_token, before_time=before_time, after_time=after_time)
+
+  with open("output/polylines/data.csv", "w") as runs_file:
+    writer = csv.writer(runs_file, delimiter=",")
+    writer.writerow(["id", "polyline"])
+
+    for i, id in enumerate(id_list):
+      if verbose and i % 10 == 0:
+        print('Processing activity {}/{}'.format(i + 1, len(id_list)))
+      r = get_activity_by_id(access_token, id)
+      polyline = r["map"]["polyline"]
+      writer.writerow([id, polyline])
+
+  print('Finished downloading activity polylines')

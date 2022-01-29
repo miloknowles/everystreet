@@ -1,4 +1,3 @@
-import requests
 from datetime import date
 from pprint import pprint
 
@@ -13,10 +12,12 @@ if __name__ == '__main__':
   # pprint(r)
 
   # Try getting a list of activities from an athlete.
-  after_time = epoch_timestamp(2022, 1, 24)
-  before_time = epoch_timestamp(2022, 1, 26)
+  # after_time = epoch_timestamp(2022, 1, 24)
+  # before_time = epoch_timestamp(2022, 1, 26)
   # r = get_athlete_activities(token, before_time=before_time, after_time=after_time, page=1, per_page=30)
   # pprint(r)
 
-  l = get_athlete_activity_ids(token, before_time=None, after_time=None)
-  print(l)
+  # l = get_athlete_activity_ids(token, before_time=None, after_time=None)
+  # print(l)
+
+  download_polylines(token)
