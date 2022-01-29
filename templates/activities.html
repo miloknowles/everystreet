@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% include 'head.html' %}
+  <body>
+    {% include 'navbar.html' %}
+    <div class="container-fluid">
+      <h3 class="mt-3">{{ num_activity_ids }} ACTIVITIES FOUND IN DATABASE</h3>
+      <ul class="mt-3" style="list-style-type: none; padding-left: 0;">
+        {% for id in activity_ids %}
+        <li class="mt-1">
+          <a href="https://www.strava.com/activities/{{id}}" style="font-size: medium;">
+            {{ id }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </body>
+</html>

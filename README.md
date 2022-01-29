@@ -1,6 +1,6 @@
 # Running Heatmap
 
-## Getting Access Tokens
+## Getting Strava Access Tokens
 
 First, you need to get an authentication code from Strava.
 
@@ -30,4 +30,7 @@ heroku local
 
 # Deploys to the remote app on Heroku.
 git push heroku main
+
+# Check the logs.
+heroku logs --tail
 ```

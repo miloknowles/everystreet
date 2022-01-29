@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
+body {
+  font-family: 'Space Mono', 'Roboto Mono', 'Roboto';
+}
+
+h3 {
+ font-size: 16px;
+ font-weight: bold;
+}
+
+/* NOTE: Hardcoded navbar height here. */
+#map {
+  height: calc(100vh - 70px);
+}
+
+.nav-link {
+  font-size: 14px;
+}
