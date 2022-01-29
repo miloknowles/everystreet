@@ -16,6 +16,9 @@ def my_runs():
 
       for row in reader:
         runs.append(row["polyline"])
+
+      print('Found polylines for {} runs'.format(len(runs)))
+
   except Exception as e:
     logging.exception(e)
 
