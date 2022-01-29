@@ -17,7 +17,7 @@ if __name__ == '__main__':
   # r = get_athlete_activities(token, before_time=before_time, after_time=after_time, page=1, per_page=30)
   # pprint(r)
 
-  # l = get_athlete_activity_ids(token, before_time=None, after_time=None)
+  # l = get_all_activity_ids(token, before_time=None, after_time=None)
   # print(l)
 
-  download_polylines(token)
+  download_polylines_csv(token)

@@ -1,57 +1,98 @@
 import logging
-from flask import Flask
-from flask import render_template
-import csv
 import json
+from pprint import pprint
+from flask import Flask, render_template, jsonify
 
+import database as db
+import strava_api as strava
 
 app = Flask(__name__)
 DATA_PATH = './static/data.csv'
 
+#===============================================================================
 
 @app.route('/')
 def render_map():
-  runs = []
+  items = []
 
   try:
-    with open(DATA_PATH, "r") as runs_file:
-      reader = csv.DictReader(runs_file)
-
-      for row in reader:
-        runs.append(row["polyline"])
-
-      print('Found polylines for {} runs'.format(len(runs)))
+    d = db.get_activities()
+    polylines = [item['map']['polyline'] for item in d.values()]
+    logging.debug('Got {} polylines'.format(len(polylines)))
 
   except Exception as e:
     logging.exception(e)
+    return jsonify({'error': str(e)}), 300
 
-  return render_template("map.html", runs=json.dumps(runs))
+  return render_template("map.html", polylines=json.dumps(polylines))
 
+#===============================================================================
 
 @app.route('/activities')
 def render_activities():
-  activity_ids = []
+  items = []
 
   try:
-    with open(DATA_PATH, "r") as runs_file:
-      reader = csv.DictReader(runs_file)
-
-      for row in reader:
-        activity_ids.append(row["id"])
+    d = db.get_activities()
+    items = d.values()
 
   except Exception as e:
     logging.exception(e)
+    return jsonify({'error': str(e)}), 300
 
-  return render_template(
-    "activities.html",
-    activity_ids=activity_ids,
-    num_activity_ids=len(activity_ids))
+  return render_template("activities.html", items=items)
 
+#===============================================================================
 
 @app.route('/stats')
 def render_stats():
   return render_template('stats.html')
 
+#===============================================================================
+
+@app.route('/action/update-activities')
+def update_activities():
+  """
+  Checks for new activities from Strava.
+  """
+  try:
+    token = strava.get_token_always_valid()
+    ids = strava.get_all_activity_ids(token)
+
+    current_count = db.get_activity_count()
+    updated_count = len(ids)
+
+    for i, id in enumerate(ids):
+      print('Processing {}/{}'.format(i + 1, len(ids)))
+
+      # Get activity data from Strava.
+      r = strava.get_activity_by_id(token, id)
+
+      # Add it to our database.
+      db.add_or_update_activity(id, r)
+
+    return jsonify({'total_count': updated_count, 'new_count': updated_count - current_count}), 200
+
+  except Exception as e:
+    logging.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+#===============================================================================
+
+@app.route('/action/get-activities')
+def get_activities():
+  """
+  Gets activities from the database.
+  """
+  try:
+    r = db.get_activities()
+    return jsonify(r), 200
+
+  except Exception as e:
+    logging.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+#===============================================================================
 
 if __name__ == "__main__":
   app.run(port=5001, debug=True)

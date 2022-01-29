@@ -1,18 +1,11 @@
 import requests
 import urllib3
-import os, sys, csv
-from calendar import timegm
-from datetime import date
+import csv
+
+from utils import epoch_timestamp
 
 # Not sure if this is needed; copied from tutorial.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
-def epoch_timestamp(year, month, day):
-  """
-  Strava expects "epoch" timestamps, which are seconds since Jan 1, 1970.
-  """
-  return timegm(date(year, month, day).timetuple())
 
 
 def get_token_always_valid():
@@ -21,9 +14,8 @@ def get_token_always_valid():
   """
   auth_url = "https://www.strava.com/oauth/token"
 
-  # Access token: 8cea078f35c16461758c1131830baa82106c53df
   # NOTE: The refresh_token must come from a special read all request.
-    # 'refresh_token': '28abf4fb89dee2efc9cbd2441ab28471c576bb70',
+  # TODO: Switch to env variables here.
   payload = {
     'client_id': '77280',
     'client_secret': '2c396c1e3d793afc2537bbb1cba8a4e1da1015ae',
@@ -66,11 +58,10 @@ def get_athlete_activities(access_token, before_time=None, after_time=None, page
   return response
 
 
-def get_athlete_activity_ids(access_token, before_time=None, after_time=None, verbose=True):
+def get_all_activity_ids(access_token, before_time=None, after_time=None, verbose=True):
   """
   Returns the IDs of all activities within the query times.
   """
-  per_page = 30
   page_index = 1
 
   id_list = []
@@ -83,7 +74,7 @@ def get_athlete_activity_ids(access_token, before_time=None, after_time=None, ve
                                           before_time=before_time,
                                           after_time=after_time,
                                           page=page_index,
-                                          per_page=per_page)
+                                          per_page=30)
     page_index += 1
 
     for activity in current_page:
@@ -92,11 +83,11 @@ def get_athlete_activity_ids(access_token, before_time=None, after_time=None, ve
   return id_list
 
 
-def download_polylines(access_token, before_time=None, after_time=None, verbose=True):
+def download_polylines_csv(access_token, before_time=None, after_time=None, verbose=True):
   """
-  https://www.markhneedham.com/blog/2017/04/29/leaflet-strava-polylines-osm/
+  See: https://www.markhneedham.com/blog/2017/04/29/leaflet-strava-polylines-osm/
   """
-  id_list = get_athlete_activity_ids(access_token, before_time=before_time, after_time=after_time)
+  id_list = get_all_activity_ids(access_token, before_time=before_time, after_time=after_time)
 
   with open("output/polylines/data.csv", "w") as runs_file:
     writer = csv.writer(runs_file, delimiter=",")

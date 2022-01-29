@@ -17,3 +17,11 @@ h3 {
 .nav-link {
   font-size: 14px;
 }
+
+#fetch-button {
+  font-size: 12px;
+}
+
+#fetch-status {
+  font-size: 12px;
+}

@@ -13,7 +13,7 @@
     </div>
 
     <script>
-      // Centered on 12W
+      // Centered on 12W.
       var lat = 42.36654037918643
       var lng = -71.10111551337953
 
@@ -23,7 +23,7 @@
           maxZoom: 18,
         }).addTo(map);
 
-      var encodedRoutes = {{ runs|safe }}
+      var encodedRoutes = {{ polylines|safe }}
 
       for (let encoded of encodedRoutes) {
         var coordinates = L.Polyline.fromEncoded(encoded).getLatLngs();
