@@ -1,9 +1,7 @@
 from curses import window
 import logging
 import json
-from pprint import pprint
 from flask import Flask, render_template, jsonify, request
-from numpy import full
 
 import util.database as db
 import util.strava_api as strava
