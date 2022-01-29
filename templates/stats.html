@@ -4,6 +4,76 @@
   <body>
     {% include 'navbar.html' %}
     <div class="container-fluid">
+      <p class="mt-3 text-muted">Click to re-compute stats on our database of activities.</p>
+      <button id="fetch-button" class="btn btn-primary" type="button">
+        Compute stats
+      </button>
+      <div id="fetch-status"></div>
+      <div class="card mt-3">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <div class="float-left card-text">Total activities</div>
+            <div id="total-activities" class="float-right card-text">{{ total_activities }}</div>
+          </li>
+          <li class="list-group-item">
+            <div class="float-left card-text">Total distance</div>
+            <div id="total-distance" class="float-right card-text">{{ '%.1f'|format(total_distance) }} mi</div>
+          </li>
+          <li class="list-group-item">
+            <div class="float-left card-text">Percent coverage</div>
+            <div id="percent-coverage" class="float-right card-text">{{ percent_coverage }} %</div>
+          </li>
+        </ul>
+      </div>
     </div>
+    <script>
+      // Control fetch button behavior.
+      $('#fetch-button').on('click', function(e) {
+        if ($('#fetch-button').hasClass('disabled')) {
+          return;
+        }
+
+        $('#fetch-button').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Computing...');
+        $('#fetch-button').addClass('disabled');
+
+        // Do stuff here.
+        $.ajax({
+          url: '/action/compute-stats',
+          type: 'GET',
+          data: {},
+          success: function(r) {
+            console.debug(r);
+
+            $('#fetch-status').html(`\
+              <div class="alert alert-success mt-3 text-small" role="alert">\
+                Done! Refresh to see new activities below.\
+              </div>`)
+
+            // Reset to the original button state.
+            $('#fetch-button').html('Compute stats');
+            $('#fetch-button').removeClass('disabled');
+          },
+          error: function(xhr) {
+            console.debug(xhr);
+
+            if (xhr.responseJSON) {
+              $('#fetch-status').html(`\
+              <div class="alert alert-danger mt-3 text-small" role="alert">\
+                Server error: ${xhr['responseJSON']['error']}\
+              </div>`)
+            } else {
+              $('#fetch-status').html(`\
+              <div class="alert alert-danger mt-3 text-small" role="alert">\
+                Unknown server error\
+              </div>`)
+            }
+
+            // Reset to the original button state.
+            $('#fetch-button').html('Compute stats');
+            $('#fetch-button').removeClass('disabled');
+          }
+        });
+      });
+    </script>
   </body>
 </html>

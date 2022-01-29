@@ -46,7 +46,7 @@ def render_activities():
 
 @app.route('/stats')
 def render_stats():
-  return render_template('stats.html')
+  return render_template('stats.html', **db.get_stats())
 
 #===============================================================================
 
@@ -86,6 +86,21 @@ def get_activities():
   """
   try:
     r = db.get_activities()
+    return jsonify(r), 200
+
+  except Exception as e:
+    logging.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+#===============================================================================
+
+@app.route('/action/compute-stats')
+def compute_stats():
+  """
+  Recompute stats over the database.
+  """
+  try:
+    r = db.update_stats()
     return jsonify(r), 200
 
   except Exception as e:

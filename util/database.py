@@ -38,3 +38,26 @@ def get_activity_count():
 
 def get_activities():
   return db.reference('activities').get()
+
+
+def update_stats():
+  items = get_activities()
+
+  total_activities = len(items.values())
+
+  total_distance = 0
+  for item in items.values():
+    total_distance += 0.621371 * item['distance'] / 1000
+
+  pdict = {
+    'total_distance': total_distance,
+    'total_activities': total_activities
+  }
+
+  db.reference('stats').update(pdict)
+
+  return pdict
+
+
+def get_stats():
+  return db.reference('stats').get()
