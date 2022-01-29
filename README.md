@@ -15,8 +15,8 @@ Notice that it requests several scopes of access, so that we can use the same to
 # Copy the OAuth2 code into this POST request. You'll be able to execute the request once, and should get an access token in the JSON response.
 curl -X POST https://www.strava.com/api/v3/oauth/token \
   -d client_id=77280 \
-  -d client_secret=2c396c1e3d793afc2537bbb1cba8a4e1da1015ae \
-  -d code=6c10d2019ec3c7bea68b08ba8db85758a9fa3960 \
+  -d client_secret=SOME_VALUE \
+  -d code=SOME_VALUE \
   -d grant_type=authorization_code
 ```
 

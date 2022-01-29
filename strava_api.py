@@ -1,8 +1,11 @@
+import os
 import requests
 import urllib3
 import csv
+from dotenv import load_dotenv
+from pprint import pprint
 
-from utils import epoch_timestamp
+load_dotenv() # Take environment variables from .env.
 
 # Not sure if this is needed; copied from tutorial.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -14,17 +17,18 @@ def get_token_always_valid():
   """
   auth_url = "https://www.strava.com/oauth/token"
 
-  # NOTE: The refresh_token must come from a special read all request.
-  # TODO: Switch to env variables here.
   payload = {
-    'client_id': '77280',
-    'client_secret': '2c396c1e3d793afc2537bbb1cba8a4e1da1015ae',
-    'refresh_token': 'a926138a52a0f9bea2156c46410204bef8ee4377',
+    'client_id': os.getenv('STRAVA_CLIENT_ID'),
+    'client_secret': os.getenv('STRAVA_CLIENT_SECRET'),
+    'refresh_token': os.getenv('STRAVA_REFRESH_TOKEN'),
     'grant_type': 'refresh_token',
     'f': 'json'
   }
 
   res = requests.post(auth_url, data=payload, verify=False)
+
+  print(res)
+
   access_token = res.json()['access_token']
 
   return access_token

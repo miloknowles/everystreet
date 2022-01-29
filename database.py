@@ -1,10 +1,20 @@
+import base64
+import json
+import os
+
 import firebase_admin as fa
 import firebase_admin.db as db
 from firebase_admin import credentials
 
 from utils import epoch_timestamp_now
 
-cred = credentials.Certificate(".serviceAccountKey.json")
+from dotenv import load_dotenv
+from pprint import pprint
+
+load_dotenv() # Take environment variables from .env.
+
+serviceAccountKey = json.loads(base64.b64decode(os.getenv('FIREBASE_KEY_BASE64')).decode('utf-8'))
+cred = credentials.Certificate(serviceAccountKey)
 app = fa.initialize_app(cred, {'databaseURL': 'https://runningheatmap-a5864-default-rtdb.firebaseio.com/'})
 
 
