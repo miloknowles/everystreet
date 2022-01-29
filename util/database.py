@@ -6,7 +6,7 @@ import firebase_admin as fa
 import firebase_admin.db as db
 from firebase_admin import credentials
 
-from utils import epoch_timestamp_now
+from util.timestamps import epoch_timestamp_now
 
 from dotenv import load_dotenv
 from pprint import pprint

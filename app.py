@@ -3,8 +3,8 @@ import json
 from pprint import pprint
 from flask import Flask, render_template, jsonify
 
-import database as db
-import strava_api as strava
+import util.database as db
+import util.strava_api as strava
 
 app = Flask(__name__)
 DATA_PATH = './static/data.csv'
