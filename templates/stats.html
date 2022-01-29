@@ -28,7 +28,11 @@
             <div id="total-time" class="float-right card-text">{{ '%.1f'|format(total_time) }} hrs</div>
           </li>
           <li class="list-group-item">
-            <div class="float-left card-text">Percent coverage</div>
+            <div class="float-left card-text">Total elevation gain</div>
+            <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }}m</div>
+          </li>
+          <li class="list-group-item">
+            <div class="float-left card-text">Percent map coverage</div>
             <div id="percent-coverage" class="float-right card-text">{{ percent_coverage }} %</div>
           </li>
         </ul>

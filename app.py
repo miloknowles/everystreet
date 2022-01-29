@@ -66,7 +66,7 @@ def update_activities():
     sliding_window = request.args.get('sliding_window', None, type=str)
 
     token = strava.get_token_always_valid()
-    logger.info('Sliding window:', sliding_window)
+    logger.info('Sliding window: {}'.format(sliding_window))
 
     # Optionally limit query to a certain timeframe.
     if sliding_window is None:
