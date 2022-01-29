@@ -11,12 +11,15 @@ from util.timestamps import epoch_timestamp_now
 from dotenv import load_dotenv
 from pprint import pprint
 
+#===============================================================================
+
 load_dotenv() # Take environment variables from .env.
 
 serviceAccountKey = json.loads(base64.b64decode(os.getenv('FIREBASE_KEY_BASE64')).decode('utf-8'))
 cred = credentials.Certificate(serviceAccountKey)
 app = fa.initialize_app(cred, {'databaseURL': 'https://runningheatmap-a5864-default-rtdb.firebaseio.com/'})
 
+#===============================================================================
 
 def add_or_update_activity(id, paramdict):
   """
@@ -27,6 +30,7 @@ def add_or_update_activity(id, paramdict):
   ref = db.reference('activities').child(str(id))
   ref.update(paramdict)
 
+#===============================================================================
 
 def get_activity_count():
   """
@@ -35,12 +39,20 @@ def get_activity_count():
   ref = db.reference('activities')
   return len(ref.get())
 
+#===============================================================================
 
 def get_activities():
+  """
+  Get all activities from the database.
+  """
   return db.reference('activities').get()
 
+#===============================================================================
 
 def update_stats():
+  """
+  Re-compute stats over the database.
+  """
   items = get_activities()
 
   total_activities = len(items.values())
@@ -58,6 +70,10 @@ def update_stats():
 
   return pdict
 
+#===============================================================================
 
 def get_stats():
+  """
+  Get current stats from the database. These might be out of date.
+  """
   return db.reference('stats').get()

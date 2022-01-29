@@ -10,6 +10,7 @@ load_dotenv() # Take environment variables from .env.
 # Not sure if this is needed; copied from tutorial.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+#===============================================================================
 
 def get_token_always_valid():
   """
@@ -26,13 +27,11 @@ def get_token_always_valid():
   }
 
   res = requests.post(auth_url, data=payload, verify=False)
-
-  print(res)
-
   access_token = res.json()['access_token']
 
   return access_token
 
+#===============================================================================
 
 def get_activity_by_id(access_token, id):
   """
@@ -47,6 +46,7 @@ def get_activity_by_id(access_token, id):
 
   return response
 
+#===============================================================================
 
 def get_athlete_activities(access_token, before_time=None, after_time=None, page=1, per_page=30):
   """
@@ -61,6 +61,7 @@ def get_athlete_activities(access_token, before_time=None, after_time=None, page
 
   return response
 
+#===============================================================================
 
 def get_all_activity_ids(access_token, before_time=None, after_time=None, verbose=True):
   """
@@ -86,6 +87,7 @@ def get_all_activity_ids(access_token, before_time=None, after_time=None, verbos
 
   return id_list
 
+#===============================================================================
 
 def download_polylines_csv(access_token, before_time=None, after_time=None, verbose=True):
   """

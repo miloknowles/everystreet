@@ -14,7 +14,7 @@
         {% for item in items %}
         <li class="">
           <a href="https://www.strava.com/activities/{{item['id']}}" class="activity-listing" target="_blank">
-            {{item['id']}} | {{item['start_date']}} | {{'%0.1f'|format(item['distance'] / 1000)|float}}km | {{item['name']}}
+            {{item['id']}} | {{'%0.1f'|format(item['distance'] / 1000 * 0.621371)|float}}mi | {{item['name']}}
           </a>
         </li>
         {% endfor %}
