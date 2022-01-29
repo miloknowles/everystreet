@@ -1,12 +1,16 @@
+from curses import window
 import logging
 import json
 from pprint import pprint
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
+from numpy import full
 
 import util.database as db
 import util.strava_api as strava
+from util.timestamps import epoch_timestamp_now
 
 app = Flask(__name__)
+logger = app.logger
 DATA_PATH = './static/data.csv'
 
 #===============================================================================
@@ -18,10 +22,10 @@ def render_map():
   try:
     d = db.get_activities()
     polylines = [item['map']['polyline'] for item in d.values()]
-    logging.debug('Got {} polylines'.format(len(polylines)))
+    logger.debug('Got {} polylines'.format(len(polylines)))
 
   except Exception as e:
-    logging.exception(e)
+    logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
   return render_template("map.html", polylines=json.dumps(polylines))
@@ -36,7 +40,7 @@ def render_activities():
     d = db.get_activities()
 
   except Exception as e:
-    logging.exception(e)
+    logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
   return render_template("activities.html", items=d.values())
@@ -49,20 +53,42 @@ def render_stats():
 
 #===============================================================================
 
-@app.route('/action/update-activities')
+@app.route('/action/pull-activities')
 def update_activities():
   """
   Checks for new activities from Strava.
+
+  NOTE: If full_history flag is set, the fetch is exhaustive. Otherwise, we just
+  scan for activities that occurred in the last week.
   """
   try:
+    # If unspecified, just do a fast pull.
+    sliding_window = request.args.get('sliding_window', None, type=str)
+
     token = strava.get_token_always_valid()
-    ids = strava.get_all_activity_ids(token)
+    logger.info('Sliding window:', sliding_window)
 
-    current_count = db.get_activity_count()
-    updated_count = len(ids)
+    # Optionally limit query to a certain timeframe.
+    if sliding_window is None:
+      window_time = None
+    elif sliding_window == 'day':
+      window_time = epoch_timestamp_now() - 86400 # Sec per day.
+    elif sliding_window == 'week':
+      window_time = epoch_timestamp_now() - 604800 # Sec per week.
+    elif sliding_window == 'month':
+      window_time = epoch_timestamp_now() - 2592000 # Sec per month.
+    else:
+      window_time = epoch_timestamp_now() - 604800 # Sec per week.
 
-    for i, id in enumerate(ids):
-      print('Processing {}/{}'.format(i + 1, len(ids)))
+    existing_ids = db.get_activities_id_set()
+    maybe_new_ids = strava.get_activities_id_set(token, after_time=window_time)
+    new_ids = maybe_new_ids - existing_ids
+
+    current_count = len(existing_ids)
+    new_count = len(new_ids)
+
+    for i, id in enumerate(new_ids):
+      logger.debug('Processing #{}/{} | '.format(i+1, len(new_ids), id))
 
       # Get activity data from Strava.
       r = strava.get_activity_by_id(token, id)
@@ -70,10 +96,10 @@ def update_activities():
       # Add it to our database.
       db.add_or_update_activity(id, r)
 
-    return jsonify({'total_count': updated_count, 'new_count': updated_count - current_count}), 200
+    return jsonify({'total_count': current_count + new_count, 'new_count': new_count}), 200
 
   except Exception as e:
-    logging.exception(e)
+    logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
 #===============================================================================
@@ -88,7 +114,7 @@ def get_activities():
     return jsonify(r), 200
 
   except Exception as e:
-    logging.exception(e)
+    logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
 #===============================================================================
@@ -103,7 +129,7 @@ def compute_stats():
     return jsonify(r), 200
 
   except Exception as e:
-    logging.exception(e)
+    logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
 #===============================================================================
@@ -119,10 +145,11 @@ def activity_json(id):
     return jsonify(r), 200
 
   except Exception as e:
-    logging.exception(e)
+    logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
 #===============================================================================
 
 if __name__ == "__main__":
+  app.logger.setLevel(logging.DEBUG)
   app.run(port=5001, debug=True)

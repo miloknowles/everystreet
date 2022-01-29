@@ -4,7 +4,14 @@
   <body>
     {% include 'navbar.html' %}
     <div class="container-fluid">
-      <p class="mt-3 text-muted">Click to fetch newest activities from Strava and add them to our database.</p>
+      <p class="mt-3 text-muted">Click to fetch newest activities from Strava and add them to our database.
+          By default, this checks for activities in the last week.</p>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="full-history-checkbox">
+        <label class="form-check-label text-muted" for="full-history-checkbox">
+          <p>Scan full history (slower)</p>
+        </label>
+      </div>
       <button id="fetch-button" class="btn btn-primary" type="button">
         Pull from Strava
       </button>
@@ -33,9 +40,11 @@
 
         // Do stuff here.
         $.ajax({
-          url: '/action/update-activities',
+          url: '/action/pull-activities',
           type: 'GET',
-          data: {},
+          data: {
+            sliding_window: $('#full-history-checkbox').prop('checked') ? 'None' : 'week'
+          },
           success: function(r) {
             console.debug(r);
 

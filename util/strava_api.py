@@ -63,7 +63,7 @@ def get_athlete_activities(access_token, before_time=None, after_time=None, page
 
 #===============================================================================
 
-def get_all_activity_ids(access_token, before_time=None, after_time=None, verbose=True):
+def get_activities_id_set(access_token, before_time=None, after_time=None, verbose=True):
   """
   Returns the IDs of all activities within the query times.
   """
@@ -79,13 +79,13 @@ def get_all_activity_ids(access_token, before_time=None, after_time=None, verbos
                                           before_time=before_time,
                                           after_time=after_time,
                                           page=page_index,
-                                          per_page=30)
+                                          per_page=10)
     page_index += 1
 
     for activity in current_page:
       id_list.append(activity['id'])
 
-  return id_list
+  return set(id_list)
 
 #===============================================================================
 
@@ -93,7 +93,7 @@ def download_polylines_csv(access_token, before_time=None, after_time=None, verb
   """
   See: https://www.markhneedham.com/blog/2017/04/29/leaflet-strava-polylines-osm/
   """
-  id_list = get_all_activity_ids(access_token, before_time=before_time, after_time=after_time)
+  id_list = get_activities_id_set(access_token, before_time=before_time, after_time=after_time)
 
   with open("output/polylines/data.csv", "w") as runs_file:
     writer = csv.writer(runs_file, delimiter=",")

@@ -49,6 +49,16 @@ def get_activities():
 
 #===============================================================================
 
+def get_activities_id_set():
+  """
+  Get a set of all IDs in the database.
+  """
+  items = get_activities()
+
+  return set([item['id'] for item in items.values()])
+
+#===============================================================================
+
 def update_stats():
   """
   Re-compute stats over the database.
