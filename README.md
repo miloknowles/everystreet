@@ -1,5 +1,7 @@
 # Running Heatmap
 
+See the app (https://runningheatmap.herokuapp.com/)[here].
+
 ## Getting Strava Access Tokens
 
 First, you need to get an authentication code from Strava.
@@ -24,13 +26,26 @@ Then you'll get a JSON response with a `refresh_token` and an `access_token`.
 
 ## Heroku
 
+https://dashboard.heroku.com/apps/runningheatmap
+
 ```bash
 # Run locally. This will load in the .env file variables.
 heroku local
+
+python app.py # If you want hot-reloading to work.
 
 # Deploys to the remote app on Heroku.
 git push heroku main
 
 # Check the logs.
 heroku logs --tail
+```
+
+## Google Firebase
+
+https://console.firebase.google.com/u/2/project/runningheatmap-a5864/overview
+
+To encode a `serviceAccountKey.json` into a string:
+```bash
+openssl base64 -in .serviceAccountKey.json -out firebaseConfigBase64.txt -A
 ```
