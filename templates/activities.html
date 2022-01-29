@@ -11,7 +11,7 @@
       <div id="fetch-status"></div>
       <h3 class="mt-3">{{ items|length }} ACTIVITIES FOUND IN DATABASE</h3>
       <ul class="mt-3" style="list-style-type: none; padding-left: 0;">
-        {% for item in items %}
+        {% for item in items|reverse %}
         <li class="activity-listing">
           <a href="https://www.strava.com/activities/{{item['id']}}" target="_blank">
             {{item['id']}}</a>

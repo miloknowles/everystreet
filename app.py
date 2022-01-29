@@ -34,13 +34,12 @@ def render_activities():
 
   try:
     d = db.get_activities()
-    items = d.values()
 
   except Exception as e:
     logging.exception(e)
     return jsonify({'error': str(e)}), 300
 
-  return render_template("activities.html", items=items)
+  return render_template("activities.html", items=d.values())
 
 #===============================================================================
 
