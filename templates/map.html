@@ -38,6 +38,25 @@
           }
         ).addTo(map);
       }
+
+      // Load in the Cambridge city limits.
+      // var city_boundary = new L.geoJson();
+      // city_boundary.addTo(map);
+
+      $.ajax({
+        dataType: "json",
+        url: "/static/geojson/other.geojson",
+        success: function(data) {
+          console.log(data);
+          // $(data.features).each(function(key, data) {
+          //   city_boundary.addData(data);
+          // });
+
+          L.geoJSON(data).addTo(map);
+        }
+      }).error(function() {
+        alert('Could not load cambridge.geojson')
+      });
     </script>
   </body>
 </html>
