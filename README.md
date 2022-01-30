@@ -49,3 +49,9 @@ To encode a `serviceAccountKey.json` into a string:
 ```bash
 openssl base64 -in .serviceAccountKey.json -out firebaseConfigBase64.txt -A
 ```
+
+## Cambridge GeoJson
+
+I downloaded the shapefile from (https://www.cambridgema.gov/GIS/gisdatadictionary/Boundary/BOUNDARY_CityBoundary)[here].
+
+Convert using (http://ogre.adc4gis.com/)[this tool], and make sure to specify `EPSG:4326` as the target SRS.

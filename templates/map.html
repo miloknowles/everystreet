@@ -18,13 +18,17 @@
       var lng = -71.10111551337953
 
       var map = L.map('map').setView([lat, lng], 14);
-      L.tileLayer(
+      var basemap = L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 18,
-        }).addTo(map);
+          maxZoom: 18}).addTo(map);
+
+      var minimal = L.tileLayer(
+        'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+          maxZoom: 18}).addTo(map);
 
       var encodedRoutes = {{ polylines|safe }}
 
+      var polylineGroup = L.layerGroup();
       for (let encoded of encodedRoutes) {
         var coordinates = L.Polyline.fromEncoded(encoded).getLatLngs();
 
@@ -33,11 +37,39 @@
           {
             color: 'blue',
             weight: 2,
-            opacity: .7,
+            opacity: 0.9,
             lineJoin: 'round'
           }
-        ).addTo(map);
+        ).addTo(polylineGroup);
       }
+
+      polylineGroup.addTo(map);
+
+      $.ajax({
+        dataType: 'json',
+        url: '/static/geojson/cambridge.geojson',
+        success: function(data) {
+          var boundary = L.geoJSON(data, {
+            style: function (feature) {
+              return {color: 'red', fill: false, weight: 3};
+            }
+          }).addTo(map);
+
+          // Add a control to toggle layers.
+          L.control.layers(
+            {
+              'Streetmap': basemap,
+              'Minimal': minimal
+            },
+            {
+              'Cambridge boundary': boundary,
+              'Raw polylines': polylineGroup
+            }).addTo(map);
+        },
+        error: function(xhr) {
+          alert('Could not load cambridge.geojson')
+        }
+      });
     </script>
   </body>
 </html>
