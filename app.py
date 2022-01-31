@@ -30,6 +30,23 @@ def render_map():
 
 #===============================================================================
 
+@app.route('/map')
+def render_mapbox():
+  items = []
+
+  try:
+    d = db.get_activities()
+    polylines = [item['map']['polyline'] for item in d.values()]
+    logger.debug('Got {} polylines'.format(len(polylines)))
+
+  except Exception as e:
+    logger.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+  return render_template("mapbox.html", polylines=json.dumps(polylines))
+
+#===============================================================================
+
 @app.route('/activities')
 def render_activities():
   items = []

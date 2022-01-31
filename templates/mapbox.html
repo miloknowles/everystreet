@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% include 'head.html' %}
+  {% include 'firebase.html' %}
+  <body>
+    {% include 'navbar.html' %}
+    <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.min.js"></script>
+
+    <div id="map">
+    </div>
+
+    <script>
+      // Centered on 12W.
+      var lat = 42.36654037918643
+      var lng = -71.10111551337953
+      mapboxgl.accessToken = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w';
+
+      // Use the coordinates you drew to make the Map Matching API request
+      // function updateRoute() {
+      //   // Set the profile
+      //   const profile = 'driving';
+      //   // Get the coordinates that were drawn on the map
+      //   const data = draw.getAll();
+      //   const lastFeature = data.features.length - 1;
+      //   const coords = data.features[lastFeature].geometry.coordinates;
+      //   // Format the coordinates
+      //   const newCoords = coords.join(';');
+      //   // Set the radius for each coordinate pair to 25 meters
+      //   const radius = coords.map(() => 25);
+      //   getMatch(newCoords, radius, profile);
+      // }
+
+      // Make a request to the Map Matching API.
+      async function getMatch(coordinates) {
+        let radius_m  = 25;
+        let profile = 'walking';
+
+        // Separate with semicolons.
+        let coordinate_str = coordinates.join(';');
+
+         // Separate the radiuses with semicolons.
+        let radius_list = coordinates.map(() => radius_m);
+        const radius_list_str = radius.join(';');
+
+        // Create the query
+        const query = await fetch(
+          `https://api.mapbox.com/matching/v5/mapbox/${profile}/${coordinates}?geometries=geojson&radiuses=${radius_list_str}&steps=true&access_token=${mapboxgl.accessToken}`,
+          { method: 'GET' }
+        );
+        const response = await query.json();
+
+        // Handle errors
+        if (response.code !== 'Ok') {
+          alert(
+            `${response.code} - ${response.message}.\n\nFor more information: https://docs.mapbox.com/api/navigation/map-matching/#map-matching-api-errors`
+          );
+          return;
+        }
+        // Get the coordinates from the response
+        const coords = response.matchings[0].geometry;
+        console.log(coords);
+
+        // Code from the next step will go here
+        // TODO
+      }
+
+      // Draw the Map Matching route as a new layer on the map.
+      function addRoute(uid, coords) {
+        let layerName = 'layer-' + uid.toString();
+
+        // If a route is already loaded, remove it.
+        if (map.getSource(layerName)) {
+          map.removeLayer(layerName);
+          map.removeSource(layerName);
+        } else {
+          map.addLayer({
+            id: layerName,
+            type: 'line',
+            source: {
+              type: 'geojson',
+              data: {
+                type: 'LineString',
+                coordinates: coords
+              }
+            },
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': 'blue',
+              'line-width': 2,
+              'line-opacity': 0.8
+            }
+          });
+        }
+      }
+
+      // https://docs.mapbox.com/api/maps/styles/
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/light-v10',
+        // style: 'mapbox://styles/mapbox/dark-v10',
+        center: [lng, lat],
+        zoom: 14
+      });
+
+      map.on('load', () => {
+        // Show the Cambridge city limits.
+        map.addSource('cambridge-geojson', {
+          type: 'geojson',
+          data: '/static/geojson/cambridge.geojson'
+        });
+
+        map.addLayer({
+          id: 'cambridge-layer',
+          type: 'line',
+          source: 'cambridge-geojson',
+          paint: {
+            'line-width': 4,
+            'line-color': 'red',
+          }
+        });
+
+        // Show each of the database runs.
+        db.get(db.ref(firebaseDatabase, 'activities')).then((snapshot) => {
+          if (snapshot.exists()) {
+            // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+            Object.entries(snapshot.val()).forEach(
+              ([key, value]) => {
+                console.log(key);
+
+                let p = value['map']['polyline'];
+
+                var coords = polyline.decode(p).map((latlng) => [ latlng[1], latlng[0] ] );
+                addRoute(key, coords);
+              }
+            );
+          } else {
+            console.log("No data available");
+          }
+        }).catch((error) => {
+          console.error(error);
+        });
+      });
+    </script>
+  </body>
+</html>
