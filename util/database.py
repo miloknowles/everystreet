@@ -111,7 +111,7 @@ def get_matched_id_set():
 
 #===============================================================================
 
-def add_or_update_match(id, chunk_id, json):
+def add_or_update_match(activity_id, chunk_id, json):
   """
   Store map matching results from the Mapbox API.
   """
@@ -119,16 +119,13 @@ def add_or_update_match(id, chunk_id, json):
 
 #===============================================================================
 
-def add_or_update_matched_features(activity_id, chunk_id, geometry):
+def add_or_update_matched_features(activity_id, geometry):
   """
   Store a map-matched segment from the Mapbox API as a geojson feature.
   """
-  uid = str(activity_id) + '-' + str(chunk_id)
-  db.reference('matched_features').child(uid).update(
-    {
-      'type': 'Feature',
-      'geometry': geometry
-    }
+  # uid = str(activity_id) + '-' + str(chunk_id)
+  db.reference('matched_features').child(activity_id).update(
+    { 'type': 'Feature', 'geometry': geometry }
   )
 
 #===============================================================================
@@ -144,3 +141,14 @@ def add_or_update_activity_features(activity_id, geometry):
       'geometry': geometry
     }
   )
+
+#===============================================================================
+
+def clear_matched_activities_and_features():
+  """
+  DANGER: Clears all matching-related database entries!
+    'matched_activities'
+    'matched_features'
+  """
+  db.reference('matched_activities').delete()
+  db.reference('matched_features').delete()

@@ -9,7 +9,7 @@
 
     <div id="map"></div>
 
-    <div id="toolbar" class="btn-toolbar mb-3" role="toolbar" aria-label="Map display toolbar">
+    <!-- <div id="toolbar" class="btn-toolbar mb-3" role="toolbar" aria-label="Map display toolbar">
       <div class="btn-group me-2" role="group" aria-label="Button group">
         <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off" checked>
         <label class="btn btn-outline-primary" for="show-coverage">Coverage</label>
@@ -22,7 +22,7 @@
       </div>
       <input type="checkbox" class="btn-check" id="show-boundary" autocomplete="off" checked>
       <label class="btn btn-outline-primary" for="show-boundary">Show Boundary</label>
-    </div>
+    </div> -->
 
     <script>
       //========================================================================
@@ -123,13 +123,11 @@
           db.get(db.ref(firebaseDatabase, 'matched_features')).then((snapshot) => {
             if (snapshot.exists()) {
               // Collect all of the geojson features into an array.
-              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
               var featureList = [];
               Object.entries(snapshot.val()).forEach(
                 ([segment_id, feature]) => { featureList.push(feature); }
               );
               addFeatureCollection(featureList, layerName, 'orange');
-              // setVisibleFeatureLayer(layerName)
             } else {
               console.log('Could not load matched activity polylines');
             }
@@ -152,13 +150,11 @@
           db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
             if (snapshot.exists()) {
               // Collect all of the geojson features into an array.
-              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
               var featureList = [];
               Object.entries(snapshot.val()).forEach(
                 ([segment_id, feature]) => { featureList.push(feature); }
               );
               addFeatureCollection(featureList, layerName, 'blue');
-              // setVisibleFeatureLayer(layerName)
             } else {
               console.log('Could not load raw activity polylines');
             }

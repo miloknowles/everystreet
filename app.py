@@ -184,15 +184,20 @@ def match_activities():
     logger.debug('radius_meters={}'.format(radius_meters))
     logger.debug('chunk_size={}'.format(chunk_size))
 
-    for id in unmatched_ids:
+    for activity_id in unmatched_ids:
       logger.debug('Matching id={}'.format(id))
 
       # Need to send coordinates in Mapbox's format: lng,lat;lng,lat.
-      encoded = db.get_activity_by_id(id)['map']['polyline']
+      encoded = db.get_activity_by_id(activity_id)['map']['polyline']
       coordinate_list = ['{},{}'.format(tup[1], tup[0]) for tup in polyline.decode(encoded)]
 
+      geometry = {
+        'coordinates': [],
+        'type': 'LineString'
+      }
+
       for j in range(len(coordinate_list) // chunk_size):
-        logger.debug('Processing API chunk: {}'.format(j))
+        logger.debug('Sending chunk {} to MapBox API'.format(j))
         offset = j*chunk_size
         # Grab a chunk of items.
         chunk_coords = coordinate_list[offset : min(offset + chunk_size, len(coordinate_list))]
@@ -200,20 +205,26 @@ def match_activities():
 
         access_token = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w'
         mapbox_url = 'https://api.mapbox.com/matching/v5/mapbox/walking/{}'.format(coordinate_str)
+
+        # NOTE: 'linear_references' only available for 'driving' query.
         param = {
           'radiuses': ';'.join([radius_meters for _ in range(len(chunk_coords))]),
           'geometries': 'geojson',
           'access_token': access_token,
-          'steps': 'false'
+          'steps': 'false',
         }
 
         response = requests.get(mapbox_url, params=param).json()
 
         if response['code'] == 'Ok':
-          geometry = response['matchings'][0]['geometry']
-          db.add_or_update_matched_features(id, j, geometry)
+          geometry['coordinates'].extend(response['matchings'][0]['geometry']['coordinates'])
+          # db.add_or_update_matched_features(id, j, geometry)
+          # db.add_or_update_match(id, j, response)
         else:
-          raise Exception('API error during map matching for {}'.format(id))
+          logger.exception(response)
+          raise Exception('API error during map matching for {}'.format(activity_id))
+
+      db.add_or_update_matched_features(activity_id, geometry)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 
