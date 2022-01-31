@@ -7,7 +7,21 @@
     <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.min.js"></script>
 
-    <div id="map">
+    <div id="map"></div>
+
+    <div id="toolbar" class="btn-toolbar mb-3" role="toolbar" aria-label="Map display toolbar">
+      <div class="btn-group me-2" role="group" aria-label="Button group">
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off" checked>
+        <label class="btn btn-outline-primary" for="show-coverage">Coverage</label>
+
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-matched" autocomplete="off">
+        <label class="btn btn-outline-primary" for="show-matched">Matched</label>
+
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-raw" autocomplete="off">
+        <label class="btn btn-outline-primary" for="show-raw">Raw</label>
+      </div>
+      <input type="checkbox" class="btn-check" id="show-boundary" autocomplete="off">
+      <label class="btn btn-outline-primary" for="show-boundary">Show Boundary</label>
     </div>
 
     <script>
@@ -17,13 +31,14 @@
       mapboxgl.accessToken = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w';
 
       // Draw the Map Matching route as a new layer on the map.
-      function addRoute(uid, coords) {
+      function addRawSegment(uid, coords) {
         let layerName = 'layer-' + uid.toString();
 
         // If a route is already loaded, remove it.
         if (map.getSource(layerName)) {
-          map.removeLayer(layerName);
-          map.removeSource(layerName);
+          // map.removeLayer(layerName);
+          // map.removeSource(layerName);
+          return;
         } else {
           map.addLayer({
             id: layerName,
@@ -49,34 +64,58 @@
         }
       }
 
-      function addMatchedSegment(activity_id, chunk_id, geometry) {
-        let layerName = 'layer-' + activity_id.toString() + '-' + chunk_id.toString();
+      // var layerNameRegistry = new Set();
 
-        // If a route is already loaded, remove it.
-        if (map.getSource(layerName)) {
-          map.removeLayer(layerName);
-          map.removeSource(layerName);
-        } else {
+      // Make this layer visible, and all others registered in layerNameRegistry invisible.
+      // function setVisibleFeatureLayer(layerName) {
+      //   map.setLayoutProperty(layerName, 'visibility', 'visible');
+
+      //   layerNameRegistry.add(layerName)
+
+      //   layerNameRegistry.forEach((otherName) => {
+      //     if (otherName != layerName) {
+      //       map.setLayoutProperty(otherName, 'visibility', 'none');
+      //     }
+      //   })
+      // }
+
+      function toggleVisibility(layerName, visible) {
+        map.setLayoutProperty(layerName, 'visibility', visible ? 'visible' : 'none');
+      }
+
+      function addFeatureCollection(featureList, layerName, layerColor) {
+        if (!map.getSource(layerName)) {
+          map.addSource(layerName,
+            {
+              type: 'geojson',
+              data: {
+                'type': 'FeatureCollection',
+                'features': featureList
+              }
+            }
+          );
           map.addLayer({
             id: layerName,
             type: 'line',
-            source: {
-              type: 'geojson',
-              data: geometry
-            },
+            source: layerName,
             layout: {
               'line-join': 'round',
               'line-cap': 'round',
               'visibility': 'visible'
             },
             paint: {
-              'line-color': 'orange',
+              'line-color': layerColor,
               'line-width': 2,
               'line-opacity': 0.8
             }
           });
         }
       }
+
+      // State variables.
+      var DID_LOAD_COVERAGE = false;
+      var DID_LOAD_MATCHED = false;
+      var DID_LOAD_RAW = false;
 
       // https://docs.mapbox.com/api/maps/styles/
       const map = new mapboxgl.Map({
@@ -105,46 +144,66 @@
         });
 
         // TODO(milo): Load heatmap geojson here from database URL.
-
         //======================================================================
-        db.get(db.ref(firebaseDatabase, 'matched_activities')).then((snapshot) => {
-          if (snapshot.exists()) {
-            // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
-            Object.entries(snapshot.val()).forEach(
-              ([activity_id, multi_chunk_data]) => {
-
-                Object.entries(multi_chunk_data).forEach(
-                  ([chunk_id, chunk_data]) => {
-                    let geometry = chunk_data['matchings']['0']['geometry'];
-                    addMatchedSegment(activity_id, chunk_id, geometry);
-                  }
-                )
-              }
-            );
-          } else {
-            console.log('Could not load raw activity polylines');
-          }
-        }).catch((error) => {
-          console.error(error);
+        $('#show-coverage').on('click', function(e) {
+          console.log('show-coverage');
         });
 
         //======================================================================
-        // db.get(db.ref(firebaseDatabase, 'activities')).then((snapshot) => {
-        //   if (snapshot.exists()) {
-        //     // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
-        //     Object.entries(snapshot.val()).forEach(
-        //       ([key, value]) => {
-        //         let p = value['map']['polyline'];
-        //         var coords = polyline.decode(p).map((latlng) => [ latlng[1], latlng[0] ] );
-        //         addRoute(key, coords);
-        //       }
-        //     );
-        //   } else {
-        //     console.log('Could not load raw activity polylines');
-        //   }
-        // }).catch((error) => {
-        //   console.error(error);
-        // });
+        $('#show-matched').on('click', function(e) {
+          let layerName = 'matched-feature-collection';
+          toggleVisibility(layerName, $('#show-matched').prop('checked'));
+
+          if (DID_LOAD_MATCHED) {
+            return;
+          }
+          DID_LOAD_MATCHED = true;
+
+          db.get(db.ref(firebaseDatabase, 'matched_features')).then((snapshot) => {
+            if (snapshot.exists()) {
+              // Collect all of the geojson features into an array.
+              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+              var featureList = [];
+              Object.entries(snapshot.val()).forEach(
+                ([segment_id, feature]) => { featureList.push(feature); }
+              );
+              addFeatureCollection(featureList, layerName, 'orange');
+              // setVisibleFeatureLayer(layerName)
+            } else {
+              console.log('Could not load matched activity polylines');
+            }
+          }).catch((error) => {
+            console.error(error);
+          });
+        });
+
+        //======================================================================
+        $('#show-raw').on('click', function(e) {
+          let layerName = 'activity-feature-collection';
+          toggleVisibility(layerName, $('#show-raw').prop('checked'));
+
+          if (DID_LOAD_RAW) {
+            return;
+          }
+          DID_LOAD_RAW = true; // Block future clicks.
+
+          db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
+            if (snapshot.exists()) {
+              // Collect all of the geojson features into an array.
+              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+              var featureList = [];
+              Object.entries(snapshot.val()).forEach(
+                ([segment_id, feature]) => { featureList.push(feature); }
+              );
+              addFeatureCollection(featureList, layerName, 'blue');
+              // setVisibleFeatureLayer(layerName)
+            } else {
+              console.log('Could not load raw activity polylines');
+            }
+          }).catch((error) => {
+            console.error(error);
+          });
+        });
       });
     </script>
   </body>

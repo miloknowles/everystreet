@@ -57,7 +57,7 @@
           url: '/action/pull-activities',
           type: 'GET',
           data: {
-            sliding_window: $('#full-history-checkbox').prop('checked') ? 'None' : 'week'
+            scope: $('#full-history-checkbox').prop('checked') ? 'all' : 'week_only'
           },
           success: function(r) {
             console.debug(r);

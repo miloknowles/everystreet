@@ -19,8 +19,6 @@ STRAVA_TOKEN = strava.get_token_always_valid()
 
 @app.route('/')
 def render_map():
-  items = []
-
   try:
     d = db.get_activities()
     polylines = [item['map']['polyline'] for item in d.values()]
@@ -82,28 +80,31 @@ def update_activities():
   """
   try:
     # If unspecified, just do a fast pull.
-    sliding_window = request.args.get('sliding_window', None, type=str)
+    scope_arg = request.args.get('scope', 'week_only', type=str)
 
     # token = strava.get_token_always_valid()
-    logger.info('Sliding window: {}'.format(sliding_window))
+    logger.info('Sliding window: {}'.format(scope_arg))
 
     # Optionally limit query to a certain timeframe.
-    if sliding_window is None:
+    if scope_arg == 'all':
       window_time = None
-    elif sliding_window == 'day':
+    elif scope_arg == 'day_only':
       window_time = epoch_timestamp_now() - 86400 # Sec per day.
-    elif sliding_window == 'week':
+    elif scope_arg == 'week_only':
       window_time = epoch_timestamp_now() - 604800 # Sec per week.
-    elif sliding_window == 'month':
+    elif scope_arg == 'month_only':
       window_time = epoch_timestamp_now() - 2592000 # Sec per month.
     else:
       window_time = epoch_timestamp_now() - 604800 # Sec per week.
 
     existing_ids = db.get_activities_id_set()
     maybe_new_ids = strava.get_activities_id_set(STRAVA_TOKEN, after_time=window_time)
-    new_ids = maybe_new_ids - existing_ids
 
-    current_count = len(existing_ids)
+    if scope_arg is None or scope_arg == 'all':
+      new_ids = maybe_new_ids
+    else:
+      new_ids = maybe_new_ids - existing_ids
+
     new_count = len(new_ids)
 
     for i, id in enumerate(new_ids):
@@ -115,7 +116,10 @@ def update_activities():
       # Add it to our database.
       db.add_or_update_activity(id, r)
 
-    return jsonify({'total_count': current_count + new_count, 'new_count': new_count}), 200
+      coords = [[c[1], c[0]] for c in polyline.decode(r['map']['polyline'])]
+      db.add_or_update_activity_features(id, {'coordinates': coords, 'type': 'LineString'})
+
+    return jsonify({'total_count': len(maybe_new_ids), 'new_count': new_count}), 200
 
   except Exception as e:
     logger.exception(e)
@@ -156,7 +160,7 @@ def compute_stats():
 @app.route('/action/match-activities')
 def match_activities():
   """
-  Recompute stats over the database.
+  Use the MapBox API to match raw GPS data to streets.
   """
   try:
     # If unspecified, just process new activities (fast option).
@@ -171,8 +175,6 @@ def match_activities():
 
     # Figure out which activities need to be processed.
     if scope_arg == 'new_only':
-      print(activity_ids)
-      print(matched_ids)
       unmatched_ids = activity_ids - matched_ids
     else:
       unmatched_ids = activity_ids
@@ -207,7 +209,8 @@ def match_activities():
         response = requests.get(mapbox_url, params=param).json()
 
         if response['code'] == 'Ok':
-          db.add_or_update_match(id, j, response)
+          geometry = response['matchings'][0]['geometry']
+          db.add_or_update_matched_features(id, j, geometry)
         else:
           raise Exception('API error during map matching for {}'.format(id))
 
