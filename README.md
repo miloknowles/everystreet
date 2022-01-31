@@ -1,6 +1,6 @@
 # Running Heatmap
 
-See the app (https://runningheatmap.herokuapp.com/)[here].
+See the app [here](https://runningheatmap.herokuapp.com/).
 
 ![Cambridge city street map](/static/cambridge.png)
 
@@ -13,7 +13,7 @@ Put this URL in the browser:
 https://www.strava.com/oauth/authorize?client_id=77280&response_type=code&redirect_uri=http://www.miloknowles.com&approval_prompt=force&scope=read_all,profile:read_all,activity:read_all
 ```
 
-Notice that it requests several scopes of access, so that we can use the same token for every action needed. More info on scopes is (https://developers.strava.com/docs/authentication/)[here].
+Notice that it requests several scopes of access, so that we can use the same token for every action needed. More info on scopes is [here](https://developers.strava.com/docs/authentication/).
 
 ```bash
 # Copy the OAuth2 code into this POST request. You'll be able to execute the request once, and should get an access token in the JSON response.
@@ -54,6 +54,6 @@ openssl base64 -in .serviceAccountKey.json -out firebaseConfigBase64.txt -A
 
 ## Cambridge GeoJson
 
-I downloaded the shapefile from (https://www.cambridgema.gov/GIS/gisdatadictionary/Boundary/BOUNDARY_CityBoundary)[here].
+I downloaded the shapefile from [here](https://www.cambridgema.gov/GIS/gisdatadictionary/Boundary/BOUNDARY_CityBoundary).
 
-Convert using (http://ogre.adc4gis.com/)[this tool], and make sure to specify `EPSG:4326` as the target SRS.
+Convert using [this tool](http://ogre.adc4gis.com/), and make sure to specify `EPSG:4326` as the target SRS.
