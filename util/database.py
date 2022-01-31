@@ -49,13 +49,17 @@ def get_activities():
 
 #===============================================================================
 
+def get_activity_by_id(id):
+  return db.reference('activities').child(str(id)).get()
+
+#===============================================================================
+
 def get_activities_id_set():
   """
   Get a set of all IDs in the database.
   """
-  items = get_activities()
-
-  return set([item['id'] for item in items.values()])
+  items = db.reference('activities').get()
+  return set(items.keys()) if items is not None else set()
 
 #===============================================================================
 
@@ -94,3 +98,21 @@ def get_stats():
   Get current stats from the database. These might be out of date.
   """
   return db.reference('stats').get()
+
+#===============================================================================
+
+def get_matched_id_set():
+  """
+  Get a set of activity IDs for which matching has been done already. This helps
+  us avoid duplicating calls to the Mapbox API.
+  """
+  items = db.reference('matched_activities').get()
+  return set(items.keys()) if items is not None else set()
+
+#===============================================================================
+
+def add_or_update_match(id, chunk_id, json):
+  """
+  Store map matching results from the Mapbox API.
+  """
+  db.reference('matched_activities').child(str(id)).child(str(chunk_id)).update(json)

@@ -1,6 +1,9 @@
-from curses import window
+import chunk
+from lib2to3.pgen2.token import STAR
+import requests
 import logging
 import json
+import polyline
 from flask import Flask, render_template, jsonify, request
 
 import util.database as db
@@ -10,6 +13,7 @@ from util.timestamps import epoch_timestamp_now
 app = Flask(__name__)
 logger = app.logger
 DATA_PATH = './static/data.csv'
+STRAVA_TOKEN = strava.get_token_always_valid()
 
 #===============================================================================
 
@@ -80,7 +84,7 @@ def update_activities():
     # If unspecified, just do a fast pull.
     sliding_window = request.args.get('sliding_window', None, type=str)
 
-    token = strava.get_token_always_valid()
+    # token = strava.get_token_always_valid()
     logger.info('Sliding window: {}'.format(sliding_window))
 
     # Optionally limit query to a certain timeframe.
@@ -96,7 +100,7 @@ def update_activities():
       window_time = epoch_timestamp_now() - 604800 # Sec per week.
 
     existing_ids = db.get_activities_id_set()
-    maybe_new_ids = strava.get_activities_id_set(token, after_time=window_time)
+    maybe_new_ids = strava.get_activities_id_set(STRAVA_TOKEN, after_time=window_time)
     new_ids = maybe_new_ids - existing_ids
 
     current_count = len(existing_ids)
@@ -106,7 +110,7 @@ def update_activities():
       logger.debug('Processing #{}/{} | '.format(i+1, len(new_ids), id))
 
       # Get activity data from Strava.
-      r = strava.get_activity_by_id(token, id)
+      r = strava.get_activity_by_id(STRAVA_TOKEN, id)
 
       # Add it to our database.
       db.add_or_update_activity(id, r)
@@ -149,14 +153,79 @@ def compute_stats():
 
 #===============================================================================
 
+@app.route('/action/match-activities')
+def match_activities():
+  """
+  Recompute stats over the database.
+  """
+  try:
+    # If unspecified, just process new activities (fast option).
+    scope_arg = request.args.get('scope', 'new_only', type=str)
+    assert(scope_arg in ['all', 'new_only'])
+
+    activity_ids = db.get_activities_id_set()
+    matched_ids = db.get_matched_id_set()
+
+    radius_meters = str(25.0)   # Search radius around each GPS point.
+    chunk_size = 80             # Max 100 points in query.
+
+    # Figure out which activities need to be processed.
+    if scope_arg == 'new_only':
+      print(activity_ids)
+      print(matched_ids)
+      unmatched_ids = activity_ids - matched_ids
+    else:
+      unmatched_ids = activity_ids
+
+    logger.info('Matching {} new activity ids (scope is {})'.format(len(unmatched_ids), scope_arg))
+    logger.debug('radius_meters={}'.format(radius_meters))
+    logger.debug('chunk_size={}'.format(chunk_size))
+
+    for id in unmatched_ids:
+      logger.debug('Matching id={}'.format(id))
+
+      # Need to send coordinates in Mapbox's format: lng,lat;lng,lat.
+      encoded = db.get_activity_by_id(id)['map']['polyline']
+      coordinate_list = ['{},{}'.format(tup[1], tup[0]) for tup in polyline.decode(encoded)]
+
+      for j in range(len(coordinate_list) // chunk_size):
+        logger.debug('Processing API chunk: {}'.format(j))
+        offset = j*chunk_size
+        # Grab a chunk of items.
+        chunk_coords = coordinate_list[offset : min(offset + chunk_size, len(coordinate_list))]
+        coordinate_str = ';'.join(chunk_coords)
+
+        access_token = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w'
+        mapbox_url = 'https://api.mapbox.com/matching/v5/mapbox/walking/{}'.format(coordinate_str)
+        param = {
+          'radiuses': ';'.join([radius_meters for _ in range(len(chunk_coords))]),
+          'geometries': 'geojson',
+          'access_token': access_token,
+          'steps': 'false'
+        }
+
+        response = requests.get(mapbox_url, params=param).json()
+
+        if response['code'] == 'Ok':
+          db.add_or_update_match(id, j, response)
+        else:
+          raise Exception('API error during map matching for {}'.format(id))
+
+    return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
+
+  except Exception as e:
+    logger.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+#===============================================================================
+
 @app.route('/action/activity/<id>')
 def activity_json(id):
   """
   Get the json for an activity (debugging).
   """
   try:
-    token = strava.get_token_always_valid()
-    r = strava.get_activity_by_id(token, id)
+    r = strava.get_activity_by_id(STRAVA_TOKEN, id)
     return jsonify(r), 200
 
   except Exception as e:

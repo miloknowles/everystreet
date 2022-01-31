@@ -27,8 +27,22 @@
         </li>
         {% endfor %}
       </ul>
+      <p class="mt-3 text-muted">Click to match each activity in the database to the street map.
+        Noisy GPS coordinates are aligned to streets, and then aggregated into a coverage map.
+        By default, this will only process new activities, but you can optionally re-process all.</p>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="match-all-checkbox">
+        <label class="form-check-label text-muted" for="match-all-checkbox">
+          <p>Re-match entire database</p>
+        </label>
+      </div>
+      <button id="match-button" class="btn btn-primary" type="button">
+        Match activities to map
+      </button>
+      <div id="match-status"></div>
     </div>
     <script>
+      //========================================================================
       // Control fetch button behavior.
       $('#fetch-button').on('click', function(e) {
         if ($('#fetch-button').hasClass('disabled')) {
@@ -60,14 +74,59 @@
           error: function(xhr) {
             console.debug(xhr);
 
+            let msg = xhr.responseJSON ? `${xhr.status}: ${xhr['responseJSON']['error']}` : `${xhr.status}: ${xhr.statusText}`
+
             $('#fetch-status').html(`\
               <div class="alert alert-danger mt-3 text-small" role="alert">\
-                Server error: ${xhr['responseJSON']['error']}\
+                ${msg}
               </div>`)
 
             // Reset to the original button state.
             $('#fetch-button').html('Pull from Strava');
             $('#fetch-button').removeClass('disabled');
+          }
+        });
+      });
+      //========================================================================
+      $('#match-button').on('click', function(e) {
+        if ($('#match-button').hasClass('disabled')) {
+          return;
+        }
+
+        $('#match-button').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...');
+        $('#match-button').addClass('disabled');
+
+        // Do stuff here.
+        $.ajax({
+          url: '/action/match-activities',
+          type: 'GET',
+          data: {
+            scope: $('#match-all-checkbox').prop('checked') ? 'all' : 'new_only'
+          },
+          success: function(r) {
+            console.debug(r);
+
+            $('#match-status').html(`\
+              <div class="alert alert-success mt-3 text-small" role="alert">\
+                Matched ${r["unmatched_ids"]} activities. Go to the map to see new coverage.\
+              </div>`)
+
+            // Reset to the original button state.
+            $('#match-button').html('Match activities to map');
+            $('#match-button').removeClass('disabled');
+          },
+          error: function(xhr) {
+            console.debug(xhr);
+
+            let msg = xhr.responseJSON ? `${xhr.status}: ${xhr['responseJSON']['error']}` : `${xhr.status}: ${xhr.statusText}`
+            $('#match-status').html(`\
+              <div class="alert alert-danger mt-3 text-small" role="alert">\
+                ${msg}
+              </div>`)
+
+            // Reset to the original button state.
+            $('#match-button').html('Match activities to map');
+            $('#match-button').removeClass('disabled');
           }
         });
       });

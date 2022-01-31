@@ -27,11 +27,11 @@ h3 {
   font-size: 12px;
 }
 
-#fetch-button {
-  font-size: 12px;
+.alert {
+  font-size: 10px;
 }
 
-#fetch-status {
+.btn {
   font-size: 10px;
 }
 
