@@ -12,28 +12,40 @@
       <div class="card mt-3">
         <ul class="list-group list-group-flush">
           <li class="list-group-item">
-            <div class="float-left card-text">Total activities</div>
-            <div id="total-activities" class="float-right card-text">{{ total_activities }}</div>
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Total activities</div>
+              <div id="total-activities" class="float-end card-text">{{ total_activities }}</div>
+            </div>
           </li>
           <li class="list-group-item">
-            <div class="float-left card-text">Total distance</div>
-            <div id="total-distance" class="float-right card-text">{{ '%.1f'|format(total_distance) }} mi</div>
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Total distance</div>
+              <div id="total-distance" class="float-right card-text">{{ '%.1f'|format(total_distance) }} mi</div>
+            </div>
           </li>
           <li class="list-group-item">
-            <div class="float-left card-text">Average distance</div>
-            <div id="avg-distance" class="float-right card-text">{{ '%.1f'|format(avg_distance) }} mi</div>
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Average distance</div>
+              <div id="avg-distance" class="float-right card-text">{{ '%.1f'|format(avg_distance) }} mi</div>
+            </div>
           </li>
           <li class="list-group-item">
-            <div class="float-left card-text">Total time</div>
-            <div id="total-time" class="float-right card-text">{{ '%.1f'|format(total_time) }} hrs</div>
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Total time</div>
+              <div id="total-time" class="float-right card-text">{{ '%.1f'|format(total_time) }} hrs</div>
+            </div>
           </li>
           <li class="list-group-item">
-            <div class="float-left card-text">Total elevation gain</div>
-            <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }}m</div>
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Total elevation gain</div>
+              <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }}m</div>
+            </div>
           </li>
           <li class="list-group-item">
-            <div class="float-left card-text">Percent map coverage</div>
-            <div id="percent-coverage" class="float-right card-text">{{ percent_coverage }} %</div>
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Percent map coverage</div>
+              <div id="percent-coverage" class="float-right card-text">{{ percent_coverage }} %</div>
+            </div>
           </li>
         </ul>
       </div>

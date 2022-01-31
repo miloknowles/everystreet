@@ -29,6 +29,11 @@ h3 {
   padding: 0px;
 }
 
+.navbar {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 .nav-link {
   font-size: 12px;
 }
