@@ -123,13 +123,11 @@
           db.get(db.ref(firebaseDatabase, 'matched_features')).then((snapshot) => {
             if (snapshot.exists()) {
               // Collect all of the geojson features into an array.
-              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
               var featureList = [];
               Object.entries(snapshot.val()).forEach(
                 ([segment_id, feature]) => { featureList.push(feature); }
               );
               addFeatureCollection(featureList, layerName, 'orange');
-              // setVisibleFeatureLayer(layerName)
             } else {
               console.log('Could not load matched activity polylines');
             }
@@ -152,13 +150,11 @@
           db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
             if (snapshot.exists()) {
               // Collect all of the geojson features into an array.
-              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
               var featureList = [];
               Object.entries(snapshot.val()).forEach(
                 ([segment_id, feature]) => { featureList.push(feature); }
               );
               addFeatureCollection(featureList, layerName, 'blue');
-              // setVisibleFeatureLayer(layerName)
             } else {
               console.log('Could not load raw activity polylines');
             }

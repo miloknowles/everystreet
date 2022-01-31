@@ -1,8 +1,5 @@
-import chunk
-from lib2to3.pgen2.token import STAR
 import requests
 import logging
-import json
 import polyline
 from flask import Flask, render_template, jsonify, request
 
@@ -12,48 +9,25 @@ from util.timestamps import epoch_timestamp_now
 
 app = Flask(__name__)
 logger = app.logger
-DATA_PATH = './static/data.csv'
 STRAVA_TOKEN = strava.get_token_always_valid()
-
-#===============================================================================
-
-# @app.route('/')
-# def render_map():
-#   try:
-#     d = db.get_activities()
-#     polylines = [item['map']['polyline'] for item in d.values()]
-#     logger.debug('Got {} polylines'.format(len(polylines)))
-
-#   except Exception as e:
-#     logger.exception(e)
-#     return jsonify({'error': str(e)}), 300
-
-#   return render_template("map.html", polylines=json.dumps(polylines))
 
 #===============================================================================
 
 @app.route('/')
 @app.route('/map')
 def render_mapbox():
-  items = []
-
-  try:
-    d = db.get_activities()
-    polylines = [item['map']['polyline'] for item in d.values()]
-    logger.debug('Got {} polylines'.format(len(polylines)))
-
-  except Exception as e:
-    logger.exception(e)
-    return jsonify({'error': str(e)}), 300
-
-  return render_template("mapbox.html", polylines=json.dumps(polylines))
+  """
+  Render the MapBox map visualization. This is the default page.
+  """
+  return render_template("mapbox.html")
 
 #===============================================================================
 
 @app.route('/activities')
 def render_activities():
-  items = []
-
+  """
+  Show the activities page.
+  """
   try:
     d = db.get_activities()
 
@@ -67,7 +41,10 @@ def render_activities():
 
 @app.route('/stats')
 def render_stats():
-  return render_template('stats.html', **db.get_stats())
+  """
+  Show the stats page.
+  """
+  return render_template('stats.html', **db.get_database_stats())
 
 #===============================================================================
 
@@ -76,15 +53,13 @@ def update_activities():
   """
   Checks for new activities from Strava.
 
-  NOTE: If full_history flag is set, the fetch is exhaustive. Otherwise, we just
+  If 'scope' arg is set to 'all', the fetch is exhaustive. Otherwise, we just
   scan for activities that occurred in the last week.
   """
   try:
     # If unspecified, just do a fast pull.
     scope_arg = request.args.get('scope', 'week_only', type=str)
-
-    # token = strava.get_token_always_valid()
-    logger.info('Sliding window: {}'.format(scope_arg))
+    logger.info('scope is {}'.format(scope_arg))
 
     # Optionally limit query to a certain timeframe.
     if scope_arg == 'all':
@@ -109,7 +84,7 @@ def update_activities():
     new_count = len(new_ids)
 
     for i, id in enumerate(new_ids):
-      logger.debug('Processing #{}/{} | '.format(i+1, len(new_ids), id))
+      logger.debug('processing #{}/{} (id={})'.format(i+1, len(new_ids), id))
 
       # Get activity data from Strava.
       r = strava.get_activity_by_id(STRAVA_TOKEN, id)
@@ -117,25 +92,11 @@ def update_activities():
       # Add it to our database.
       db.add_or_update_activity(id, r)
 
+      # Also store the decoded coordinates from the activity for faster client-side lookup later.
       coords = [[c[1], c[0]] for c in polyline.decode(r['map']['polyline'])]
       db.add_or_update_activity_features(id, {'coordinates': coords, 'type': 'LineString'})
 
     return jsonify({'total_count': len(maybe_new_ids), 'new_count': new_count}), 200
-
-  except Exception as e:
-    logger.exception(e)
-    return jsonify({'error': str(e)}), 300
-
-#===============================================================================
-
-@app.route('/action/get-activities')
-def get_activities():
-  """
-  Gets activities from the database.
-  """
-  try:
-    r = db.get_activities()
-    return jsonify(r), 200
 
   except Exception as e:
     logger.exception(e)
@@ -169,7 +130,7 @@ def match_activities():
     assert(scope_arg in ['all', 'new_only'])
 
     activity_ids = db.get_activities_id_set()
-    matched_ids = db.get_matched_id_set()
+    matched_ids = db.get_matched_features_id_set()
 
     radius_meters = str(25.0)   # Search radius around each GPS point.
     chunk_size = 80             # Max 100 points in query.
@@ -184,15 +145,20 @@ def match_activities():
     logger.debug('radius_meters={}'.format(radius_meters))
     logger.debug('chunk_size={}'.format(chunk_size))
 
-    for id in unmatched_ids:
+    for activity_id in unmatched_ids:
       logger.debug('Matching id={}'.format(id))
 
       # Need to send coordinates in Mapbox's format: lng,lat;lng,lat.
-      encoded = db.get_activity_by_id(id)['map']['polyline']
+      encoded = db.get_activity_by_id(activity_id)['map']['polyline']
       coordinate_list = ['{},{}'.format(tup[1], tup[0]) for tup in polyline.decode(encoded)]
 
+      geometry = {
+        'coordinates': [],
+        'type': 'LineString'
+      }
+
       for j in range(len(coordinate_list) // chunk_size):
-        logger.debug('Processing API chunk: {}'.format(j))
+        logger.debug('Sending chunk {} to MapBox API'.format(j))
         offset = j*chunk_size
         # Grab a chunk of items.
         chunk_coords = coordinate_list[offset : min(offset + chunk_size, len(coordinate_list))]
@@ -200,20 +166,25 @@ def match_activities():
 
         access_token = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w'
         mapbox_url = 'https://api.mapbox.com/matching/v5/mapbox/walking/{}'.format(coordinate_str)
+
+        # NOTE: 'linear_references' only available for 'driving' query.
         param = {
           'radiuses': ';'.join([radius_meters for _ in range(len(chunk_coords))]),
           'geometries': 'geojson',
           'access_token': access_token,
-          'steps': 'false'
+          'steps': 'false',
         }
 
         response = requests.get(mapbox_url, params=param).json()
 
         if response['code'] == 'Ok':
-          geometry = response['matchings'][0]['geometry']
-          db.add_or_update_matched_features(id, j, geometry)
+          geometry['coordinates'].extend(response['matchings'][0]['geometry']['coordinates'])
+
         else:
-          raise Exception('API error during map matching for {}'.format(id))
+          logger.exception(response)
+          raise Exception('API error during map matching for {}'.format(activity_id))
+
+      db.add_or_update_matched_features(activity_id, geometry)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 
@@ -224,9 +195,9 @@ def match_activities():
 #===============================================================================
 
 @app.route('/action/activity/<id>')
-def activity_json(id):
+def get_activity_json(id):
   """
-  Get the json for an activity (debugging).
+  Get the JSON for an activity (debugging).
   """
   try:
     r = strava.get_activity_by_id(STRAVA_TOKEN, id)
