@@ -4,8 +4,8 @@
   {% include 'firebase.html' %}
   <body>
     {% include 'navbar.html' %}
-    <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.min.js"></script>
+    <!-- <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script> -->
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.min.js"></script> -->
 
     <div id="map"></div>
 
@@ -20,69 +20,19 @@
         <input type="checkbox" class="btn-check" name="btnradio" id="show-raw" autocomplete="off">
         <label class="btn btn-outline-primary" for="show-raw">Raw</label>
       </div>
-      <input type="checkbox" class="btn-check" id="show-boundary" autocomplete="off">
+      <input type="checkbox" class="btn-check" id="show-boundary" autocomplete="off" checked>
       <label class="btn btn-outline-primary" for="show-boundary">Show Boundary</label>
     </div>
 
     <script>
-      // Centered on 12W.
-      var lat = 42.36654037918643
-      var lng = -71.10111551337953
-      mapboxgl.accessToken = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w';
+      //========================================================================
 
-      // Draw the Map Matching route as a new layer on the map.
-      function addRawSegment(uid, coords) {
-        let layerName = 'layer-' + uid.toString();
-
-        // If a route is already loaded, remove it.
-        if (map.getSource(layerName)) {
-          // map.removeLayer(layerName);
-          // map.removeSource(layerName);
-          return;
-        } else {
-          map.addLayer({
-            id: layerName,
-            type: 'line',
-            source: {
-              type: 'geojson',
-              data: {
-                type: 'LineString',
-                coordinates: coords
-              }
-            },
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-              'visibility': 'visible'
-            },
-            paint: {
-              'line-color': 'blue',
-              'line-width': 2,
-              'line-opacity': 0.8
-            }
-          });
-        }
-      }
-
-      // var layerNameRegistry = new Set();
-
-      // Make this layer visible, and all others registered in layerNameRegistry invisible.
-      // function setVisibleFeatureLayer(layerName) {
-      //   map.setLayoutProperty(layerName, 'visibility', 'visible');
-
-      //   layerNameRegistry.add(layerName)
-
-      //   layerNameRegistry.forEach((otherName) => {
-      //     if (otherName != layerName) {
-      //       map.setLayoutProperty(otherName, 'visibility', 'none');
-      //     }
-      //   })
-      // }
-
+      // Hide or unhide a layer by name.
       function toggleVisibility(layerName, visible) {
         map.setLayoutProperty(layerName, 'visibility', visible ? 'visible' : 'none');
       }
 
+      // Add a feature collection as a single layer.
       function addFeatureCollection(featureList, layerName, layerColor) {
         if (!map.getSource(layerName)) {
           map.addSource(layerName,
@@ -112,10 +62,17 @@
         }
       }
 
+      //========================================================================
+
       // State variables.
       var DID_LOAD_COVERAGE = false;
       var DID_LOAD_MATCHED = false;
       var DID_LOAD_RAW = false;
+
+      // Centered on 12W.
+      var lat = 42.36654037918643
+      var lng = -71.10111551337953
+      mapboxgl.accessToken = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w';
 
       // https://docs.mapbox.com/api/maps/styles/
       const map = new mapboxgl.Map({
@@ -126,6 +83,9 @@
         zoom: 14
       });
 
+      //========================================================================
+
+      // Put anything in here that should wait for map to load.
       map.on('load', () => {
         // Show the Cambridge city limits.
         map.addSource('cambridge-geojson', {
@@ -134,7 +94,7 @@
         });
 
         map.addLayer({
-          id: 'cambridge-layer',
+          id: 'cambridge-boundary',
           type: 'line',
           source: 'cambridge-geojson',
           paint: {
@@ -143,13 +103,14 @@
           }
         });
 
-        // TODO(milo): Load heatmap geojson here from database URL.
         //======================================================================
+
         $('#show-coverage').on('click', function(e) {
           console.log('show-coverage');
         });
 
         //======================================================================
+
         $('#show-matched').on('click', function(e) {
           let layerName = 'matched-feature-collection';
           toggleVisibility(layerName, $('#show-matched').prop('checked'));
@@ -178,6 +139,7 @@
         });
 
         //======================================================================
+
         $('#show-raw').on('click', function(e) {
           let layerName = 'activity-feature-collection';
           toggleVisibility(layerName, $('#show-raw').prop('checked'));
@@ -203,6 +165,13 @@
           }).catch((error) => {
             console.error(error);
           });
+        });
+
+        //======================================================================
+
+        $('#show-boundary').on('click', function(e) {
+          let layerName = 'cambridge-boundary';
+          toggleVisibility(layerName, $('#show-boundary').prop('checked'));
         });
       });
     </script>

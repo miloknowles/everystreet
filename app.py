@@ -17,21 +17,22 @@ STRAVA_TOKEN = strava.get_token_always_valid()
 
 #===============================================================================
 
-@app.route('/')
-def render_map():
-  try:
-    d = db.get_activities()
-    polylines = [item['map']['polyline'] for item in d.values()]
-    logger.debug('Got {} polylines'.format(len(polylines)))
+# @app.route('/')
+# def render_map():
+#   try:
+#     d = db.get_activities()
+#     polylines = [item['map']['polyline'] for item in d.values()]
+#     logger.debug('Got {} polylines'.format(len(polylines)))
 
-  except Exception as e:
-    logger.exception(e)
-    return jsonify({'error': str(e)}), 300
+#   except Exception as e:
+#     logger.exception(e)
+#     return jsonify({'error': str(e)}), 300
 
-  return render_template("map.html", polylines=json.dumps(polylines))
+#   return render_template("map.html", polylines=json.dumps(polylines))
 
 #===============================================================================
 
+@app.route('/')
 @app.route('/map')
 def render_mapbox():
   items = []
