@@ -83,7 +83,7 @@ def get_activities_id_set(access_token, before_time=None, after_time=None, verbo
     page_index += 1
 
     for activity in current_page:
-      id_list.append(activity['id'])
+      id_list.append(str(activity['id']))
 
   return set(id_list)
 
