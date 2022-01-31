@@ -2,6 +2,8 @@
 
 See the app (https://runningheatmap.herokuapp.com/)[here].
 
+![Cambridge city street map](/static/cambridge.png)
+
 ## Getting Strava Access Tokens
 
 First, you need to get an authentication code from Strava.

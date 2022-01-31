@@ -16,6 +16,13 @@ h3 {
 /* NOTE: Hardcoded navbar height here. */
 #map {
   height: calc(100vh - 60px);
+  width: 100%
+}
+
+#toolbar {
+  position: absolute;
+  top: 65px;
+  right: 10px;
 }
 
 .no-padding {
@@ -26,11 +33,11 @@ h3 {
   font-size: 12px;
 }
 
-#fetch-button {
-  font-size: 12px;
+.alert {
+  font-size: 10px;
 }
 
-#fetch-status {
+.btn {
   font-size: 10px;
 }
 

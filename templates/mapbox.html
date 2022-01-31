@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% include 'head.html' %}
+  {% include 'firebase.html' %}
+  <body>
+    {% include 'navbar.html' %}
+    <!-- <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script> -->
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.min.js"></script> -->
+
+    <div id="map"></div>
+
+    <div id="toolbar" class="btn-toolbar mb-3" role="toolbar" aria-label="Map display toolbar">
+      <div class="btn-group me-2" role="group" aria-label="Button group">
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off" checked>
+        <label class="btn btn-outline-primary" for="show-coverage">Coverage</label>
+
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-matched" autocomplete="off">
+        <label class="btn btn-outline-primary" for="show-matched">Matched</label>
+
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-raw" autocomplete="off">
+        <label class="btn btn-outline-primary" for="show-raw">Raw</label>
+      </div>
+      <input type="checkbox" class="btn-check" id="show-boundary" autocomplete="off" checked>
+      <label class="btn btn-outline-primary" for="show-boundary">Show Boundary</label>
+    </div>
+
+    <script>
+      //========================================================================
+
+      // Hide or unhide a layer by name.
+      function toggleVisibility(layerName, visible) {
+        map.setLayoutProperty(layerName, 'visibility', visible ? 'visible' : 'none');
+      }
+
+      // Add a feature collection as a single layer.
+      function addFeatureCollection(featureList, layerName, layerColor) {
+        if (!map.getSource(layerName)) {
+          map.addSource(layerName,
+            {
+              type: 'geojson',
+              data: {
+                'type': 'FeatureCollection',
+                'features': featureList
+              }
+            }
+          );
+          map.addLayer({
+            id: layerName,
+            type: 'line',
+            source: layerName,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              'visibility': 'visible'
+            },
+            paint: {
+              'line-color': layerColor,
+              'line-width': 2,
+              'line-opacity': 0.8
+            }
+          });
+        }
+      }
+
+      //========================================================================
+
+      // State variables.
+      var DID_LOAD_COVERAGE = false;
+      var DID_LOAD_MATCHED = false;
+      var DID_LOAD_RAW = false;
+
+      // Centered on 12W.
+      var lat = 42.36654037918643
+      var lng = -71.10111551337953
+      mapboxgl.accessToken = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w';
+
+      // https://docs.mapbox.com/api/maps/styles/
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/light-v10',
+        // style: 'mapbox://styles/mapbox/dark-v10',
+        center: [lng, lat],
+        zoom: 14
+      });
+
+      //========================================================================
+
+      // Put anything in here that should wait for map to load.
+      map.on('load', () => {
+        // Show the Cambridge city limits.
+        map.addSource('cambridge-geojson', {
+          type: 'geojson',
+          data: '/static/geojson/cambridge.geojson'
+        });
+
+        map.addLayer({
+          id: 'cambridge-boundary',
+          type: 'line',
+          source: 'cambridge-geojson',
+          paint: {
+            'line-width': 4,
+            'line-color': 'red',
+          }
+        });
+
+        //======================================================================
+
+        $('#show-coverage').on('click', function(e) {
+          console.log('show-coverage');
+        });
+
+        //======================================================================
+
+        $('#show-matched').on('click', function(e) {
+          let layerName = 'matched-feature-collection';
+          toggleVisibility(layerName, $('#show-matched').prop('checked'));
+
+          if (DID_LOAD_MATCHED) {
+            return;
+          }
+          DID_LOAD_MATCHED = true;
+
+          db.get(db.ref(firebaseDatabase, 'matched_features')).then((snapshot) => {
+            if (snapshot.exists()) {
+              // Collect all of the geojson features into an array.
+              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+              var featureList = [];
+              Object.entries(snapshot.val()).forEach(
+                ([segment_id, feature]) => { featureList.push(feature); }
+              );
+              addFeatureCollection(featureList, layerName, 'orange');
+              // setVisibleFeatureLayer(layerName)
+            } else {
+              console.log('Could not load matched activity polylines');
+            }
+          }).catch((error) => {
+            console.error(error);
+          });
+        });
+
+        //======================================================================
+
+        $('#show-raw').on('click', function(e) {
+          let layerName = 'activity-feature-collection';
+          toggleVisibility(layerName, $('#show-raw').prop('checked'));
+
+          if (DID_LOAD_RAW) {
+            return;
+          }
+          DID_LOAD_RAW = true; // Block future clicks.
+
+          db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
+            if (snapshot.exists()) {
+              // Collect all of the geojson features into an array.
+              // https://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+              var featureList = [];
+              Object.entries(snapshot.val()).forEach(
+                ([segment_id, feature]) => { featureList.push(feature); }
+              );
+              addFeatureCollection(featureList, layerName, 'blue');
+              // setVisibleFeatureLayer(layerName)
+            } else {
+              console.log('Could not load raw activity polylines');
+            }
+          }).catch((error) => {
+            console.error(error);
+          });
+        });
+
+        //======================================================================
+
+        $('#show-boundary').on('click', function(e) {
+          let layerName = 'cambridge-boundary';
+          toggleVisibility(layerName, $('#show-boundary').prop('checked'));
+        });
+      });
+    </script>
+  </body>
+</html>
