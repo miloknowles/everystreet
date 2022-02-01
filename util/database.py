@@ -152,3 +152,8 @@ def clear_matched_activities_and_features():
   """
   db.reference('matched_activities').delete()
   db.reference('matched_features').delete()
+
+#===============================================================================
+
+def get_matched_feature_by_id(activity_id):
+  return db.reference('matched_features').child(activity_id).get()
