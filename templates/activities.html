@@ -6,12 +6,12 @@
     <div class="container-fluid">
       <p class="mt-3 text-muted">Click to fetch newest activities from Strava and add them to our database.
           By default, this checks for activities in the last week.</p>
-      <div class="form-check">
+      <!-- <div class="form-check">
         <input class="form-check-input" type="checkbox" id="full-history-checkbox">
         <label class="form-check-label text-muted" for="full-history-checkbox">
           <p>Scan all activities on Strava (slower)</p>
         </label>
-      </div>
+      </div> -->
       <button id="fetch-button" class="btn btn-primary" type="button">
         Pull from Strava
       </button>
@@ -30,12 +30,12 @@
       <p class="mt-3 text-muted">Click to match each activity in the database to the street map.
         Noisy GPS coordinates are aligned to streets, and then aggregated into a coverage map.
         By default, this will only process new activities, but you can optionally re-process all.</p>
-      <div class="form-check">
+      <!-- <div class="form-check">
         <input class="form-check-input" type="checkbox" id="match-all-checkbox">
         <label class="form-check-label text-muted" for="match-all-checkbox">
           <p>Re-match entire database (slower)</p>
         </label>
-      </div>
+      </div> -->
       <button id="match-button" class="btn btn-primary" type="button">
         Match activities to map
       </button>
