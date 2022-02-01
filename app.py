@@ -6,6 +6,8 @@ from flask import Flask, render_template, jsonify, request
 import util.database as db
 import util.strava_api as strava
 from util.timestamps import epoch_timestamp_now
+import util.matching as matching
+from util.file_util import *
 
 app = Flask(__name__)
 logger = app.logger
@@ -121,6 +123,53 @@ def compute_stats():
 
 @app.route('/action/match-activities')
 def match_activities():
+  """
+  Match GPS points from an activity with edges in the road network.
+  """
+  try:
+    # If unspecified, just process new activities (fast option).
+    scope_arg = request.args.get('scope', 'new_only', type=str)
+    assert(scope_arg in ['all', 'new_only'])
+
+    activity_ids = db.get_activities_id_set()
+    matched_ids = db.get_matched_features_id_set()
+
+    # Figure out which activities need to be processed.
+    if scope_arg == 'new_only':
+      unmatched_ids = activity_ids - matched_ids
+    else:
+      unmatched_ids = activity_ids
+
+    logger.info('Matching {} new activity ids (scope is {})'.format(len(unmatched_ids), scope_arg))
+
+    nodes_df, edges_df = matching.load_graph(graph_folder('drive_graph.gpkg'))
+    logger.debug('Loaded graph')
+
+    # Build a KDtree for fast queries.
+    kdtree = matching.kdtree_from_gdf(nodes_df)
+    logger.debug('Built kdtree')
+
+    for activity_id in unmatched_ids:
+      logger.debug('Processing {}'.format(activity_id))
+
+      activity_data = db.get_activity_by_id(activity_id)
+      decoded = polyline.decode(activity_data['map']['polyline'])
+      query_points = matching.resample_points([[p[1], p[0]] for p in decoded], spacing=20.0)
+      matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=40)
+
+      logger.debug('Updating database')
+      db.update_coverage('cambridge', matched_edges, activity_id)
+
+    return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
+
+  except Exception as e:
+    logger.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+#===============================================================================
+
+@app.route('/action/match-activities-mapbox')
+def match_activities_mapbox():
   """
   Use the MapBox API to match raw GPS data to streets.
   """

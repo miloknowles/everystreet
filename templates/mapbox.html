@@ -11,11 +11,11 @@
 
     <div id="toolbar" class="btn-toolbar mb-3" role="toolbar" aria-label="Map display toolbar">
       <div class="btn-group me-2" role="group" aria-label="Button group">
-        <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off" checked>
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off">
         <label class="btn btn-outline-primary" for="show-coverage">Coverage</label>
 
-        <input type="checkbox" class="btn-check" name="btnradio" id="show-matched" autocomplete="off">
-        <label class="btn btn-outline-primary" for="show-matched">Matched</label>
+        <!-- <input type="checkbox" class="btn-check" name="btnradio" id="show-matched" autocomplete="off"> -->
+        <!-- <label class="btn btn-outline-primary" for="show-matched">Matched</label> -->
 
         <input type="checkbox" class="btn-check" name="btnradio" id="show-raw" autocomplete="off">
         <label class="btn btn-outline-primary" for="show-raw">Raw</label>
@@ -118,34 +118,29 @@
           paint: {
             'line-width': 2,
             'line-color': 'red',
+            'line-opacity': 0.5
           }
         });
 
         //======================================================================
 
         $('#show-coverage').on('click', function(e) {
-          console.log('show-coverage');
-        });
-
-        //======================================================================
-
-        $('#show-matched').on('click', function(e) {
           let layerName = 'matched-feature-collection';
-          toggleVisibility(layerName, $('#show-matched').prop('checked'));
+          toggleVisibility(layerName, $('#show-coverage').prop('checked'));
 
           if (DID_LOAD_MATCHED) {
             return;
           }
           DID_LOAD_MATCHED = true;
 
-          db.get(db.ref(firebaseDatabase, 'matched_features')).then((snapshot) => {
+          db.get(db.ref(firebaseDatabase, 'coverage/cambridge')).then((snapshot) => {
             if (snapshot.exists()) {
               // Collect all of the geojson features into an array.
               var featureList = [];
               Object.entries(snapshot.val()).forEach(
-                ([segment_id, feature]) => { featureList.push(feature); }
+                ([edge_id, feature]) => { featureList.push(feature['feature']); }
               );
-              addFeatureCollection(featureList, layerName, 'orange');
+              addFeatureCollection(featureList, layerName, 'green');
             } else {
               console.log('Could not load matched activity polylines');
             }

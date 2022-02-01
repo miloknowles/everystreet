@@ -1,10 +1,7 @@
-from dis import dis
-from nis import match
-import os, sys
+import sys
 
 import osmnx as ox
 import geopandas as gpd
-import geopy
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -124,10 +121,7 @@ def register_feature(query_points, nodes_gdf, edges_gdf, kdtree):
     kdtree (cKDTree) : a KDtree for quick nearest neighbor lookups.
   """
   # Get points from matched activity.
-  k = 3
-  dists, idxs = kdtree.query(query_points, k=k)
-
-  print(dists.shape)
+  dists, idxs = kdtree.query(query_points, k=3)
 
   # Get distance between each point and neighbor in meters.
   # https://gis.stackexchange.com/questions/293310/how-to-use-geoseries-distance-to-get-the-right-answer/293319
@@ -140,12 +134,9 @@ def register_feature(query_points, nodes_gdf, edges_gdf, kdtree):
   nn1 = nodes_gdf.iloc[idxs[:,1]].to_crs(epsg=3310).reset_index(drop=True)
   nn2 = nodes_gdf.iloc[idxs[:,2]].to_crs(epsg=3310).reset_index(drop=True)
 
-  # dist1 = query_gdf.distance(nn_gdf)
-
   # Put nearest neighbor nodes and distances in one df.
   nn_data = pd.concat(
     [
-      # nodes_gdf.iloc[idxs].reset_index(drop=False),
       pd.Series(nodes_gdf.iloc[idxs[:,0]].reset_index(drop=False)['osmid'], name='osmid0', dtype=np.int64),
       pd.Series(nodes_gdf.iloc[idxs[:,1]].reset_index(drop=False)['osmid'], name='osmid1', dtype=np.int64),
       pd.Series(nodes_gdf.iloc[idxs[:,2]].reset_index(drop=False)['osmid'], name='osmid2', dtype=np.int64),
@@ -162,7 +153,6 @@ def register_feature(query_points, nodes_gdf, edges_gdf, kdtree):
   for i in range(len(query_points) - 1):
     di_values = [nn_data.iloc[i]['dist{}'.format(_)] for _ in range(3)]
     di_valid = [di < max_dist_btw_point_and_node for di in di_values]
-    # di = nn_data.iloc[i]['distance_m']
 
     # Check if starting point i is near a node. If not, skip.
     # By definition, all other candidates will be farther.
@@ -171,9 +161,9 @@ def register_feature(query_points, nodes_gdf, edges_gdf, kdtree):
 
     print('Starting from point {} (distance is {} m)'.format(i, di_values[0]))
 
-    j = i+1
-    did_complete_edge = False
-    tries_remaining = 10
+    j = i + 1
+    did_complete_edge = False     # Once we complete an edge that starts from this node, continue.
+    tries_remaining = 10          # Far away node matches are unlikely to complete an edge.
     while j < (len(query_points) - 1) and not did_complete_edge and tries_remaining > 0:
 
       # Search for the next end point j that's near a node.
@@ -190,13 +180,6 @@ def register_feature(query_points, nodes_gdf, edges_gdf, kdtree):
       # Get the candidate node IDs of i and j.
       u_options = [np.int64(nn_data.iloc[i]['osmid{}'.format(_)]) for _ in range(3) if di_valid[_]]
       v_options = [np.int64(nn_data.iloc[j]['osmid{}'.format(_)]) for _ in range(3) if di_valid[_]]
-      # u = nn_data.iloc[i]['osmid']
-      # v = nn_data.iloc[j]['osmid']
-
-      # print(u_options)
-      # print(v_options)
-
-      # did_complete_edge = False
 
       for u in u_options:
         for v in v_options:
@@ -214,24 +197,6 @@ def register_feature(query_points, nodes_gdf, edges_gdf, kdtree):
 
       j += 1
       tries_remaining -= 1
-
-      # if did_complete_edge
-    # print(u, v)
-
-    # tmp_gdf = gpd.GeoDataFrame(geometry=[nn_data.iloc[i].geometry, nn_data.iloc[j].geometry])
-    # tmp_gdf.plot(ax=ax, marker='o', color='red', markersize=2)
-    # # plt.show()
-
-    # # The edges dataframe has a MultiIndex with (u, v, ?).
-    # uv_exists = edges_gdf.index.isin([(u, v, 0)]).any()
-    # vu_exists = edges_gdf.index.isin([(v, u, 0)]).any()
-
-    # if uv_exists:
-    #   e = edges_gdf.loc[(u, v, 0)]
-    #   completed_edges.append(e)
-    # elif vu_exists:
-    #   e = edges_gdf.loc[(v, u, 0)]
-    #   completed_edges.append(e)
 
   print('Completed {} edges'.format(len(completed_edges)))
   completed_gdf = gpd.GeoDataFrame(data=completed_edges)
