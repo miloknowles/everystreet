@@ -1,10 +1,10 @@
-# Running Heatmap
+# :runner: Running Every Street (in Cambridge)
 
-See the app [here](https://runningheatmap.herokuapp.com/).
+See the app [here](https://everystreet.herokuapp.com/).
 
-![Cambridge city street map](/static/cambridge.png)
+![Cambridge street map](/static/cambridge.png)
 
-## Getting Strava Access Tokens
+## :runner: Getting Strava Access Tokens
 
 First, you need to get an authentication code from Strava.
 
@@ -26,9 +26,9 @@ curl -X POST https://www.strava.com/api/v3/oauth/token \
 
 Then you'll get a JSON response with a `refresh_token` and an `access_token`.
 
-## Heroku
+## :computer: Heroku
 
-https://dashboard.heroku.com/apps/runningheatmap
+https://dashboard.heroku.com/apps/everystreet
 
 ```bash
 # Run locally. This will load in the .env file variables.
@@ -43,7 +43,7 @@ git push heroku main
 heroku logs --tail
 ```
 
-## Google Firebase
+## :fire: Google Firebase
 
 https://console.firebase.google.com/u/2/project/runningheatmap-a5864/overview
 
@@ -52,7 +52,7 @@ To encode a `serviceAccountKey.json` into a string:
 openssl base64 -in .serviceAccountKey.json -out firebaseConfigBase64.txt -A
 ```
 
-## Cambridge GeoJson
+## :scroll: Cambridge GeoJson
 
 I downloaded the shapefile from [here](https://www.cambridgema.gov/GIS/gisdatadictionary/Boundary/BOUNDARY_CityBoundary).
 
