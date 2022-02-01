@@ -8,4 +8,3 @@ numpy
 pandas
 shapely
 scipy
-osmnx
