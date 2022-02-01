@@ -38,15 +38,6 @@ def add_or_update_activity(id, paramdict):
 
 #===============================================================================
 
-def get_activity_count():
-  """
-  Counts the number activities in the database. This might be slow as db scales.
-  """
-  ref = db.reference('activities')
-  return len(ref.get())
-
-#===============================================================================
-
 def get_activities():
   """
   Get all activities from the database.
@@ -56,6 +47,9 @@ def get_activities():
 #===============================================================================
 
 def get_activity_by_id(id):
+  """
+  Get database activity by its ID.
+  """
   return db.reference('activities').child(str(id)).get()
 
 #===============================================================================
@@ -77,32 +71,13 @@ def get_database_stats():
 
 #===============================================================================
 
-def get_matched_features_id_set():
+def get_matched_id_set():
   """
   Get a set of activity IDs for which matching has been done already. This helps
   us avoid duplicating calls to the Mapbox API.
   """
-  items = db.reference('matched_features').get()
+  items = db.reference('coverage').child('matched_activities').get()
   return set(items.keys()) if items is not None else set()
-
-#===============================================================================
-
-def add_or_update_match(activity_id, chunk_id, json):
-  """
-  Store map matching results from the Mapbox API.
-  """
-  db.reference('matched_activities').child(str(id)).child(str(chunk_id)).update(json)
-
-#===============================================================================
-
-def add_or_update_matched_features(activity_id, geometry):
-  """
-  Store a map-matched segment from the Mapbox API as a geojson feature.
-  """
-  # uid = str(activity_id) + '-' + str(chunk_id)
-  db.reference('matched_features').child(activity_id).update(
-    { 'type': 'Feature', 'geometry': geometry }
-  )
 
 #===============================================================================
 
@@ -120,27 +95,14 @@ def add_or_update_activity_features(activity_id, geometry):
 
 #===============================================================================
 
-def clear_matched_activities_and_features():
-  """
-  DANGER: Clears all matching-related database entries!
-    'matched_activities'
-    'matched_features'
-  """
-  db.reference('matched_activities').delete()
-  db.reference('matched_features').delete()
-
-#===============================================================================
-
-def get_matched_feature_by_id(activity_id):
-  return db.reference('matched_features').child(activity_id).get()
-
-#===============================================================================
-
 def update_coverage(map_name, edges, activity_id):
   """
   Save completed edges to the database for visualization and coverage metrics.
   """
   p = {}
+
+  # Indicate that we processed this activity.
+  db.reference('coverage').child('matched_activities').child(str(activity_id)).update({'num_edges': len(edges)})
 
   for i in range(len(edges)):
     from_id = edges.iloc[i]['from']
@@ -170,14 +132,8 @@ def update_coverage(map_name, edges, activity_id):
 
 #===============================================================================
 
-def reset_coverage():
-  db.reference('coverage').delete()
-
-#===============================================================================
-
 def get_coverage(map_name):
   return db.reference('coverage').child(map_name).get()
-
 
 #===============================================================================
 
@@ -231,3 +187,25 @@ def update_stats():
   db.reference('stats').update(pdict)
 
   return pdict
+
+#===============================================================================
+#============================ DATABASE MAINTENANCE =============================
+#===============================================================================
+
+def clear_matched_activities_and_features():
+  """
+  DANGER: Clears all matching-related database entries!
+    'matched_activities'
+    'matched_features'
+  """
+  db.reference('matched_activities').delete()
+  db.reference('matched_features').delete()
+
+
+#===============================================================================
+
+def clear_coverage():
+  """
+  DANGER: Clears all children under 'coverage' in the database.
+  """
+  db.reference('coverage').delete()

@@ -133,7 +133,7 @@ def match_activities():
     assert(scope_arg in ['all', 'new_only'])
 
     activity_ids = db.get_activities_id_set()
-    matched_ids = db.get_matched_features_id_set()
+    matched_ids = db.get_matched_id_set()
 
     # Figure out which activities need to be processed.
     if scope_arg == 'new_only':
@@ -160,84 +160,6 @@ def match_activities():
 
       logger.debug('Updating database')
       db.update_coverage('cambridge', matched_edges, activity_id)
-
-    return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
-
-  except Exception as e:
-    logger.exception(e)
-    return jsonify({'error': str(e)}), 300
-
-#===============================================================================
-
-@app.route('/action/match-activities-mapbox')
-def match_activities_mapbox():
-  """
-  Use the MapBox API to match raw GPS data to streets.
-  """
-  try:
-    # If unspecified, just process new activities (fast option).
-    scope_arg = request.args.get('scope', 'new_only', type=str)
-    assert(scope_arg in ['all', 'new_only'])
-
-    activity_ids = db.get_activities_id_set()
-    matched_ids = db.get_matched_features_id_set()
-
-    radius_meters = str(25.0)   # Search radius around each GPS point.
-    chunk_size = 80             # Max 100 points in query.
-
-    # Figure out which activities need to be processed.
-    if scope_arg == 'new_only':
-      unmatched_ids = activity_ids - matched_ids
-    else:
-      unmatched_ids = activity_ids
-
-    logger.info('Matching {} new activity ids (scope is {})'.format(len(unmatched_ids), scope_arg))
-    logger.debug('radius_meters={}'.format(radius_meters))
-    logger.debug('chunk_size={}'.format(chunk_size))
-
-    for activity_id in unmatched_ids:
-      logger.debug('Matching id={}'.format(id))
-
-      # Need to send coordinates in Mapbox's format: lng,lat;lng,lat.
-      encoded = db.get_activity_by_id(activity_id)['map']['polyline']
-      coordinate_list = ['{},{}'.format(tup[1], tup[0]) for tup in polyline.decode(encoded)]
-
-      geometry = {
-        'coordinates': [],
-        'type': 'LineString'
-      }
-
-      for j in range(len(coordinate_list) // chunk_size):
-        logger.debug('Sending chunk {} to MapBox API'.format(j))
-        offset = j*chunk_size
-        # Grab a chunk of items.
-        chunk_coords = coordinate_list[offset : min(offset + chunk_size, len(coordinate_list))]
-        coordinate_str = ';'.join(chunk_coords)
-
-        access_token = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w'
-
-        # NOTE: Driving does not work for matching running segments! One-ways will be rejected and
-        # lots of other streets seem to be missed.
-        mapbox_url = 'https://api.mapbox.com/matching/v5/mapbox/walking/{}'.format(coordinate_str)
-
-        # NOTE: 'linear_references' only available for 'driving' query.
-        param = {
-          'radiuses': ';'.join([radius_meters for _ in range(len(chunk_coords))]),
-          'geometries': 'geojson',
-          'access_token': access_token,
-          'steps': 'false',
-        }
-
-        response = requests.get(mapbox_url, params=param).json()
-
-        if response['code'] == 'Ok':
-          geometry['coordinates'].extend(response['matchings'][0]['geometry']['coordinates'])
-
-        else:
-          logger.exception(response)
-          raise Exception('API error during map matching for {}'.format(activity_id))
-
-      db.add_or_update_matched_features(activity_id, geometry)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 
