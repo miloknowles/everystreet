@@ -9,8 +9,6 @@ from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry import Polygon
 
-from util.database import get_activity_by_id, get_matched_feature_by_id
-
 
 def kdtree_from_points(points):
   return cKDTree(points)

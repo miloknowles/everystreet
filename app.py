@@ -125,42 +125,42 @@ def compute_stats():
 
 #===============================================================================
 
-@app.route('/action/compute-coverage')
-def compute_coverage():
-  """
-  Recompute coverage over the database.
-  """
-  try:
-    r = db.get_coverage('cambridge') # TODO
-    logger.debug('Got edges from database')
+# @app.route('/action/compute-coverage')
+# def compute_coverage():
+#   """
+#   Recompute coverage over the database.
+#   """
+#   try:
+#     r = db.get_coverage('cambridge') # TODO
+#     logger.debug('Got edges from database')
 
-    _, edges_df = matching.load_graph(graph_folder('drive_graph.gpkg'))
-    logger.debug('Loaded graph')
+#     _, edges_df = matching.load_graph(graph_folder('drive_graph.gpkg'))
+#     logger.debug('Loaded graph')
 
-    edges_df['complete'] = pd.Series(np.ones(len(edges_df)))
+#     edges_df['complete'] = pd.Series(np.ones(len(edges_df)))
 
-    for key in r:
-      v = np.int64(r[key]['to'])
-      u = np.int64(r[key]['from'])
+#     for key in r:
+#       v = np.int64(r[key]['to'])
+#       u = np.int64(r[key]['from'])
 
-      if edges_df.index.isin([(u, v, 0)]).any():
-        edges_df.at[(u, v, 0), 'complete'] = 1
+#       if edges_df.index.isin([(u, v, 0)]).any():
+#         edges_df.at[(u, v, 0), 'complete'] = 1
 
-    C = edges_df['complete'].sum()
-    total_dist = edges_df['length'].sum()
-    complete_dist = edges_df[edges_df['complete'] > 0]['length'].sum()
+#     C = edges_df['complete'].sum()
+#     total_dist = edges_df['length'].sum()
+#     complete_dist = edges_df[edges_df['complete'] > 0]['length'].sum()
 
-    return jsonify(
-      {
-        'total': len(edges_df),
-        'complete': C,
-        'total_dist': total_dist,
-        'complete_dist': complete_dist
-      }), 200
+#     return jsonify(
+#       {
+#         'total': len(edges_df),
+#         'complete': C,
+#         'total_dist': total_dist,
+#         'complete_dist': complete_dist
+#       }), 200
 
-  except Exception as e:
-    logger.exception(e)
-    return jsonify({'error': str(e)}), 300
+#   except Exception as e:
+#     logger.exception(e)
+#     return jsonify({'error': str(e)}), 300
 
 #===============================================================================
 

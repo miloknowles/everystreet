@@ -9,6 +9,7 @@
         Compute stats
       </button>
       <div id="fetch-status"></div>
+      <h3 class="mt-3">ACTIVITIES</h3>
       <div class="card mt-3">
         <ul class="list-group list-group-flush">
           <li class="list-group-item">
@@ -41,10 +42,27 @@
               <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }}m</div>
             </div>
           </li>
+        </ul>
+      </div>
+
+      <h3 class="mt-3">MAP COVERAGE</h3>
+      <div class="card mt-3">
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Percent map coverage</div>
-              <div id="percent-coverage" class="float-right card-text">{{ percent_coverage }} %</div>
+              <div class="float-left card-text">Total length of streets</div>
+              <div class="float-right card-text">{{ '%.1f'|format(total_map_distance) }}mi</div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Completed length of streets</div>
+              <div class="float-right card-text">{{ '%.1f'|format(complete_map_distance) }}mi</div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Percent coverage</div>
+              <div class="float-right card-text">{{ '%.1f'|format(percent_coverage) }}%</div>
             </div>
           </li>
         </ul>
