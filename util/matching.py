@@ -7,7 +7,6 @@ import pandas as pd
 
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
-from shapely.geometry import Polygon
 
 
 def kdtree_from_points(points):

@@ -3,3 +3,8 @@ gunicorn
 firebase-admin
 python-dotenv
 polyline
+geopandas
+numpy
+pandas
+shapely
+scipy

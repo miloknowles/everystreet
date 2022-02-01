@@ -2,9 +2,6 @@ import requests
 import logging
 import polyline
 
-import numpy as np
-import pandas as pd
-
 from flask import Flask, render_template, jsonify, request
 
 import util.database as db
