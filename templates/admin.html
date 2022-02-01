@@ -6,12 +6,12 @@
     <div class="container-fluid">
       <p class="mt-3 text-muted">Click to fetch newest activities from Strava and add them to our database.
           By default, this checks for activities in the last week.</p>
-      <!-- <div class="form-check">
+      <div class="form-check">
         <input class="form-check-input" type="checkbox" id="full-history-checkbox">
         <label class="form-check-label text-muted" for="full-history-checkbox">
           <p>Scan all activities on Strava (slower)</p>
         </label>
-      </div> -->
+      </div>
       <button id="fetch-button" class="btn btn-primary" type="button">
         Pull from Strava
       </button>
@@ -30,16 +30,22 @@
       <p class="mt-3 text-muted">Click to match each activity in the database to the street map.
         Noisy GPS coordinates are aligned to streets, and then aggregated into a coverage map.
         By default, this will only process new activities, but you can optionally re-process all.</p>
-      <!-- <div class="form-check">
+      <div class="form-check">
         <input class="form-check-input" type="checkbox" id="match-all-checkbox">
         <label class="form-check-label text-muted" for="match-all-checkbox">
           <p>Re-match entire database (slower)</p>
         </label>
-      </div> -->
+      </div>
       <button id="match-button" class="btn btn-primary" type="button">
         Match activities to map
       </button>
       <div id="match-status"></div>
+
+      <h3 class="mt-3">DANGER ZONE</h3>
+      <button id="clear-coverage" class="btn btn-danger" type="button">
+        Clear matched segments
+      </button>
+      <div id="danger-status"></div>
     </div>
     <script>
       //========================================================================
@@ -87,7 +93,9 @@
           }
         });
       });
+
       //========================================================================
+
       $('#match-button').on('click', function(e) {
         if ($('#match-button').hasClass('disabled')) {
           return;
@@ -127,6 +135,52 @@
             // Reset to the original button state.
             $('#match-button').html('Match activities to map');
             $('#match-button').removeClass('disabled');
+          }
+        });
+      });
+
+      //========================================================================
+      $('#clear-coverage').on('click', function(e) {
+        let buttonId = '#clear-coverage';
+        let statusId = '#danger-status';
+
+        if ($(buttonId).hasClass('disabled')) {
+          return;
+        }
+
+        $(buttonId).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...');
+        $(buttonId).addClass('disabled');
+
+        // Do stuff here.
+        $.ajax({
+          url: '/action/clear-coverage',
+          type: 'GET',
+          data: {
+          },
+          success: function(r) {
+            console.debug(r);
+
+            $(statusId).html(`\
+              <div class="alert alert-success mt-3 text-small" role="alert">\
+                Cleared coverage data. You can re-run from a clean slate now.\
+              </div>`)
+
+            // Reset to the original button state.
+            $(buttonId).html('Match activities to map');
+            $(buttonId).removeClass('disabled');
+          },
+          error: function(xhr) {
+            console.debug(xhr);
+
+            let msg = xhr.responseJSON ? `${xhr.status}: ${xhr['responseJSON']['error']}` : `${xhr.status}: ${xhr.statusText}`
+            $(statusId).html(`\
+              <div class="alert alert-danger mt-3 text-small" role="alert">\
+                ${msg}
+              </div>`)
+
+            // Reset to the original button state.
+            $(buttonId).html('Match activities to map');
+            $(buttonId).removeClass('disabled');
           }
         });
       });
