@@ -21,7 +21,10 @@
         <label class="btn btn-outline-primary" for="show-raw">Raw</label>
       </div>
       <input type="checkbox" class="btn-check" id="show-boundary" autocomplete="off" checked>
-      <label class="btn btn-outline-primary" for="show-boundary">Show Boundary</label>
+      <label class="btn btn-outline-primary" for="show-boundary">Boundary</label>
+
+      <input type="checkbox" class="btn-check" id="show-network" autocomplete="off" checked>
+      <label class="btn btn-outline-primary" for="show-network">Network</label>
     </div>
 
     <script>
@@ -103,6 +106,21 @@
           }
         });
 
+        map.addSource('edges-geojson', {
+          type: 'geojson',
+          data: '/static/geojson/drive_edges.geojson'
+        });
+
+        map.addLayer({
+          id: 'network-edges',
+          type: 'line',
+          source: 'edges-geojson',
+          paint: {
+            'line-width': 2,
+            'line-color': 'red',
+          }
+        });
+
         //======================================================================
 
         $('#show-coverage').on('click', function(e) {
@@ -168,6 +186,12 @@
         $('#show-boundary').on('click', function(e) {
           let layerName = 'cambridge-boundary';
           toggleVisibility(layerName, $('#show-boundary').prop('checked'));
+        });
+
+        $('#show-network').on('click', function(e) {
+          let layerName = 'network-edges';
+          console.log($('#network-edges').prop('checked'));
+          toggleVisibility(layerName, $('#show-network').prop('checked'));
         });
       });
     </script>
