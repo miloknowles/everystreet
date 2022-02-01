@@ -155,8 +155,8 @@ def match_activities():
 
       activity_data = db.get_activity_by_id(activity_id)
       decoded = polyline.decode(activity_data['map']['polyline'])
-      query_points = matching.resample_points([[p[1], p[0]] for p in decoded], spacing=20.0)
-      matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=40)
+      query_points = matching.resample_points([[p[1], p[0]] for p in decoded], spacing=15.0)
+      matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=30)
 
       logger.debug('Updating database')
       db.update_coverage('cambridge', matched_edges, activity_id)
