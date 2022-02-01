@@ -110,8 +110,6 @@ def match_points_to_edges(points, nodes_df, edges_df, kdtree, max_node_dist=40):
     if not di_valid[0]:
       continue
 
-    # print('Starting from point {} (distance is {} m)'.format(i, di_values[0]))
-
     j = i + 1
     did_complete_edge = False     # Once we complete an edge that starts from this node, continue.
     tries_remaining = 10          # Far away node matches are unlikely to complete an edge.
@@ -125,8 +123,6 @@ def match_points_to_edges(points, nodes_df, edges_df, kdtree, max_node_dist=40):
       dj = nn_data.iloc[j]['dist0']
       if dj > max_node_dist:
         continue
-
-      # print('Trying endpoint {} (distance is {} m)'.format(j, dj))
 
       # Get the candidate node IDs of i and j.
       u_options = [np.int64(nn_data.iloc[i]['osmid{}'.format(_)]) for _ in range(3) if di_valid[_]]
@@ -149,5 +145,4 @@ def match_points_to_edges(points, nodes_df, edges_df, kdtree, max_node_dist=40):
       j += 1
       tries_remaining -= 1
 
-  # print('Completed {} edges'.format(len(completed_edges)))
   return gpd.GeoDataFrame(data=completed_edges)
