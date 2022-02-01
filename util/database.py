@@ -196,3 +196,8 @@ def update_coverage(map_name, edges, activity_id):
 
 def reset_coverage():
   db.reference('coverage').delete()
+
+#===============================================================================
+
+def get_coverage(map_name):
+  return db.reference('coverage').child(map_name).get()
