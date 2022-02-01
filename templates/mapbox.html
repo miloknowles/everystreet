@@ -4,18 +4,12 @@
   {% include 'firebase.html' %}
   <body>
     {% include 'navbar.html' %}
-    <!-- <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script> -->
-    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.min.js"></script> -->
-
     <div id="map"></div>
 
     <div id="toolbar" class="btn-toolbar mb-3" role="toolbar" aria-label="Map display toolbar">
       <div class="btn-group me-2" role="group" aria-label="Button group">
-        <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off">
+        <input type="checkbox" class="btn-check" name="btnradio" id="show-coverage" autocomplete="off" checked>
         <label class="btn btn-outline-primary" for="show-coverage">Coverage</label>
-
-        <!-- <input type="checkbox" class="btn-check" name="btnradio" id="show-matched" autocomplete="off"> -->
-        <!-- <label class="btn btn-outline-primary" for="show-matched">Matched</label> -->
 
         <input type="checkbox" class="btn-check" name="btnradio" id="show-raw" autocomplete="off">
         <label class="btn btn-outline-primary" for="show-raw">Raw</label>
@@ -24,7 +18,7 @@
       <label class="btn btn-outline-primary" for="show-boundary">Boundary</label>
 
       <input type="checkbox" class="btn-check" id="show-network" autocomplete="off" checked>
-      <label class="btn btn-outline-primary" for="show-network">Network</label>
+      <label class="btn btn-outline-primary" for="show-network">Streets</label>
     </div>
 
     <script>
@@ -86,6 +80,60 @@
         zoom: 14
       });
 
+      //======================================================================
+
+      function loadCoverageMap() {
+        let layerName = 'matched-feature-collection';
+        toggleVisibility(layerName, $('#show-coverage').prop('checked'));
+
+        if (DID_LOAD_MATCHED) {
+          return;
+        }
+        DID_LOAD_MATCHED = true;
+
+        db.get(db.ref(firebaseDatabase, 'coverage/cambridge')).then((snapshot) => {
+          if (snapshot.exists()) {
+            // Collect all of the geojson features into an array.
+            var featureList = [];
+            Object.entries(snapshot.val()).forEach(
+              ([edge_id, feature]) => { featureList.push(feature['feature']); }
+            );
+            addFeatureCollection(featureList, layerName, 'green');
+          } else {
+            console.log('Could not load matched activity polylines');
+          }
+        }).catch((error) => {
+          console.error(error);
+        });
+      }
+
+      //======================================================================
+
+      function loadRawMap() {
+        let layerName = 'activity-feature-collection';
+        toggleVisibility(layerName, $('#show-raw').prop('checked'));
+
+        if (DID_LOAD_RAW) {
+          return;
+        }
+        DID_LOAD_RAW = true; // Block future clicks.
+
+        db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
+          if (snapshot.exists()) {
+            // Collect all of the geojson features into an array.
+            var featureList = [];
+            Object.entries(snapshot.val()).forEach(
+              ([segment_id, feature]) => { featureList.push(feature); }
+            );
+            addFeatureCollection(featureList, layerName, 'blue');
+          } else {
+            console.log('Could not load raw activity polylines');
+          }
+        }).catch((error) => {
+          console.error(error);
+        });
+      }
+
       //========================================================================
 
       // Put anything in here that should wait for map to load.
@@ -124,59 +172,11 @@
 
         //======================================================================
 
-        $('#show-coverage').on('click', function(e) {
-          let layerName = 'matched-feature-collection';
-          toggleVisibility(layerName, $('#show-coverage').prop('checked'));
+        $('#show-coverage').on('click', (e) => loadCoverageMap());
+        $('#show-raw').on('click', (e) => loadRawMap());
 
-          if (DID_LOAD_MATCHED) {
-            return;
-          }
-          DID_LOAD_MATCHED = true;
-
-          db.get(db.ref(firebaseDatabase, 'coverage/cambridge')).then((snapshot) => {
-            if (snapshot.exists()) {
-              // Collect all of the geojson features into an array.
-              var featureList = [];
-              Object.entries(snapshot.val()).forEach(
-                ([edge_id, feature]) => { featureList.push(feature['feature']); }
-              );
-              addFeatureCollection(featureList, layerName, 'green');
-            } else {
-              console.log('Could not load matched activity polylines');
-            }
-          }).catch((error) => {
-            console.error(error);
-          });
-        });
-
-        //======================================================================
-
-        $('#show-raw').on('click', function(e) {
-          let layerName = 'activity-feature-collection';
-          toggleVisibility(layerName, $('#show-raw').prop('checked'));
-
-          if (DID_LOAD_RAW) {
-            return;
-          }
-          DID_LOAD_RAW = true; // Block future clicks.
-
-          db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
-            if (snapshot.exists()) {
-              // Collect all of the geojson features into an array.
-              var featureList = [];
-              Object.entries(snapshot.val()).forEach(
-                ([segment_id, feature]) => { featureList.push(feature); }
-              );
-              addFeatureCollection(featureList, layerName, 'blue');
-            } else {
-              console.log('Could not load raw activity polylines');
-            }
-          }).catch((error) => {
-            console.error(error);
-          });
-        });
-
-        //======================================================================
+        // Show this one on map load.
+        loadCoverageMap();
 
         $('#show-boundary').on('click', function(e) {
           let layerName = 'cambridge-boundary';
@@ -185,9 +185,10 @@
 
         $('#show-network').on('click', function(e) {
           let layerName = 'network-edges';
-          console.log($('#network-edges').prop('checked'));
           toggleVisibility(layerName, $('#show-network').prop('checked'));
         });
+
+        //======================================================================
       });
     </script>
   </body>

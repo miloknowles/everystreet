@@ -39,7 +39,7 @@
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
               <div class="float-left card-text">Total elevation gain</div>
-              <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }}m</div>
+              <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }} m</div>
             </div>
           </li>
         </ul>
@@ -50,13 +50,25 @@
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
               <div class="float-left card-text">Total street length</div>
-              <div class="float-right card-text">{{ '%.1f'|format(total_map_distance) }}mi</div>
+              <div class="float-right card-text">{{ '%.1f'|format(total_map_distance) }} mi</div>
             </div>
           </li>
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
               <div class="float-left card-text">Completed street length</div>
-              <div class="float-right card-text">{{ '%.1f'|format(complete_map_distance) }}mi</div>
+              <div class="float-right card-text">{{ '%.1f'|format(complete_map_distance) }} mi</div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Total street segments</div>
+              <div class="float-right card-text">{{ '%d'|format(total_map_edges) }}</div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <div class="float-left card-text">Completed street segments</div>
+              <div class="float-right card-text">{{ '%d'|format(complete_map_edges) }}</div>
             </div>
           </li>
           <li class="list-group-item">
@@ -66,6 +78,11 @@
             </div>
           </li>
         </ul>
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" style="width: {{ percent_coverage }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            {{ '%.1f'|format(percent_coverage) }}%
+          </div>
+        </div>
       </div>
     </div>
     <script>
