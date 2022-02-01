@@ -86,24 +86,3 @@ def get_activities_id_set(access_token, before_time=None, after_time=None, verbo
       id_list.append(str(activity['id']))
 
   return set(id_list)
-
-#===============================================================================
-
-def download_polylines_csv(access_token, before_time=None, after_time=None, verbose=True):
-  """
-  See: https://www.markhneedham.com/blog/2017/04/29/leaflet-strava-polylines-osm/
-  """
-  id_list = get_activities_id_set(access_token, before_time=before_time, after_time=after_time)
-
-  with open("output/polylines/data.csv", "w") as runs_file:
-    writer = csv.writer(runs_file, delimiter=",")
-    writer.writerow(["id", "polyline"])
-
-    for i, id in enumerate(id_list):
-      if verbose and i % 10 == 0:
-        print('Processing activity {}/{}'.format(i + 1, len(id_list)))
-      r = get_activity_by_id(access_token, id)
-      polyline = r["map"]["polyline"]
-      writer.writerow([id, polyline])
-
-  print('Finished downloading activity polylines')
