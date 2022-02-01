@@ -165,6 +165,9 @@ def match_activities():
         coordinate_str = ';'.join(chunk_coords)
 
         access_token = 'pk.eyJ1IjoibWlsb2tub3dsZXM5NyIsImEiOiJja3oxcnlvYngxNjFrMnVtanB2N3dnZ212In0.4fQMtF4yhwXBhRVoh97x_w'
+
+        # NOTE: Driving does not work for matching running segments! One-ways will be rejected and
+        # lots of other streets seem to be missed.
         mapbox_url = 'https://api.mapbox.com/matching/v5/mapbox/walking/{}'.format(coordinate_str)
 
         # NOTE: 'linear_references' only available for 'driving' query.
