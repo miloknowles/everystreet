@@ -42,6 +42,22 @@ def render_activities():
 
 #===============================================================================
 
+@app.route('/admin')
+def render_admin():
+  """
+  Show the activities page.
+  """
+  try:
+    d = db.get_activities()
+
+  except Exception as e:
+    logger.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+  return render_template("admin.html", items=d.values())
+
+#===============================================================================
+
 @app.route('/stats')
 def render_stats():
   """
@@ -183,6 +199,17 @@ def get_activity_json(id):
     return jsonify({'error': str(e)}), 300
 
 #===============================================================================
+
+@app.route('/action/clear-coverage')
+def clear_coverage():
+  try:
+    db.clear_coverage()
+    return jsonify('ok'), 200
+
+  except Exception as e:
+    logger.exception(e)
+    return jsonify({'error': str(e)}), 300
+
 
 if __name__ == "__main__":
   app.logger.setLevel(logging.DEBUG)
