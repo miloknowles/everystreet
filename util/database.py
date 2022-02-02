@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from sqlite3 import complete_statement
 
 import numpy as np
 import pandas as pd
@@ -121,6 +122,8 @@ def update_coverage(map_name, edges, activity_id):
         'geometry': geom,
         'type': 'Feature'
       },
+      'osmid': str(edges.iloc[i]['osmid']),
+      'length': edges.iloc[i]['length'],
       'from': str(from_id),
       'to': str(to_id),
       'name': edge_name,
@@ -158,18 +161,14 @@ def update_stats():
 
   _, edges_df = matching.load_graph(graph_folder('drive_graph.gpkg'))
 
-  edges_df['complete'] = pd.Series(np.ones(len(edges_df)))
+  edges_df['complete'] = np.zeros(len(edges_df))
 
+  dist = 0
   for key in r:
-    v = np.int64(r[key]['to'])
-    u = np.int64(r[key]['from'])
+    dist += r[key]['length']
 
-    if edges_df.index.isin([(u, v, 0)]).any():
-      edges_df.at[(u, v, 0), 'complete'] = 1
-
-  complete_map_edges = edges_df['complete'].sum()
   total_map_distance = edges_df['length'].sum() * 0.621371 / 1000
-  complete_map_distance = edges_df[edges_df['complete'] > 0]['length'].sum() * 0.621371 / 1000
+  complete_map_distance = dist * 0.621371 / 1000
 
   pdict = {
     'total_distance': total_distance,
@@ -180,7 +179,7 @@ def update_stats():
     'total_map_distance': total_map_distance,
     'complete_map_distance': complete_map_distance,
     'total_map_edges': len(edges_df),
-    'complete_map_edges':  complete_map_edges,
+    'complete_map_edges':  len(r),
     'percent_coverage': complete_map_distance / total_map_distance * 100
   }
 
