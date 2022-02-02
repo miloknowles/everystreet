@@ -203,7 +203,7 @@ def get_activity_json(id):
 @app.route('/action/clear-coverage')
 def clear_coverage():
   try:
-    db.clear_coverage()
+    # db.clear_coverage()
     return jsonify('ok'), 200
 
   except Exception as e:
