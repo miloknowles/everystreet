@@ -41,7 +41,7 @@
       </button>
       <div id="match-status"></div>
 
-      <h3 class="mt-3">DANGER ZONE</h3>
+      <h3 class="mt-5">DANGER ZONE</h3>
       <button id="clear-coverage" class="btn btn-danger" type="button">
         Clear matched segments
       </button>
@@ -49,140 +49,91 @@
     </div>
     <script>
       //========================================================================
-      // Control fetch button behavior.
-      $('#fetch-button').on('click', function(e) {
-        if ($('#fetch-button').hasClass('disabled')) {
-          return;
-        }
 
-        $('#fetch-button').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching...');
-        $('#fetch-button').addClass('disabled');
-
-        // Do stuff here.
-        $.ajax({
-          url: '/action/pull-activities',
-          type: 'GET',
-          data: {
-            scope: $('#full-history-checkbox').prop('checked') ? 'all' : 'week_only'
-          },
-          success: function(r) {
-            console.debug(r);
-
-            $('#fetch-status').html(`\
-              <div class="alert alert-success mt-3 text-small" role="alert">\
-                Found ${r["new_count"]} new, ${r["total_count"]} total. Refresh to see new activities below.\
-              </div>`)
-
-            // Reset to the original button state.
-            $('#fetch-button').html('Pull from Strava');
-            $('#fetch-button').removeClass('disabled');
-          },
-          error: function(xhr) {
-            console.debug(xhr);
-
-            let msg = xhr.responseJSON ? `${xhr.status}: ${xhr['responseJSON']['error']}` : `${xhr.status}: ${xhr.statusText}`
-
-            $('#fetch-status').html(`\
-              <div class="alert alert-danger mt-3 text-small" role="alert">\
-                ${msg}
-              </div>`)
-
-            // Reset to the original button state.
-            $('#fetch-button').html('Pull from Strava');
-            $('#fetch-button').removeClass('disabled');
-          }
-        });
-      });
-
-      //========================================================================
-
-      $('#match-button').on('click', function(e) {
-        if ($('#match-button').hasClass('disabled')) {
-          return;
-        }
-
-        $('#match-button').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...');
-        $('#match-button').addClass('disabled');
-
-        // Do stuff here.
-        $.ajax({
-          url: '/action/match-activities',
-          type: 'GET',
-          data: {
-            scope: $('#match-all-checkbox').prop('checked') ? 'all' : 'new_only'
-          },
-          success: function(r) {
-            console.debug(r);
-
-            $('#match-status').html(`\
-              <div class="alert alert-success mt-3 text-small" role="alert">\
-                Matched ${r["unmatched_ids"]} activities. Go to the map to see new coverage.\
-              </div>`)
-
-            // Reset to the original button state.
-            $('#match-button').html('Match activities to map');
-            $('#match-button').removeClass('disabled');
-          },
-          error: function(xhr) {
-            console.debug(xhr);
-
-            let msg = xhr.responseJSON ? `${xhr.status}: ${xhr['responseJSON']['error']}` : `${xhr.status}: ${xhr.statusText}`
-            $('#match-status').html(`\
-              <div class="alert alert-danger mt-3 text-small" role="alert">\
-                ${msg}
-              </div>`)
-
-            // Reset to the original button state.
-            $('#match-button').html('Match activities to map');
-            $('#match-button').removeClass('disabled');
-          }
-        });
-      });
-
-      //========================================================================
-      $('#clear-coverage').on('click', function(e) {
-        let buttonId = '#clear-coverage';
-        let statusId = '#danger-status';
-
+      function callServerFunction(buttonId, statusId, url, reqParams, makeSuccessMessage) {
         if ($(buttonId).hasClass('disabled')) {
           return;
         }
+        let originalText = $(buttonId).html();
 
-        $(buttonId).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...');
+        $(buttonId).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Working...');
         $(buttonId).addClass('disabled');
 
-        // Do stuff here.
-        $.ajax({
-          url: '/action/clear-coverage',
-          type: 'GET',
-          data: {
-          },
-          success: function(r) {
-            console.debug(r);
+        let urlWithParams = url + '?' + new URLSearchParams(reqParams);
 
-            $(statusId).html(`\
-              <div class="alert alert-success mt-3 text-small" role="alert">\
-                Cleared coverage data. You can re-run from a clean slate now.\
-              </div>`)
-
-            // Reset to the original button state.
-            $(buttonId).html('Match activities to map');
+        fetch(urlWithParams,
+          {
+            method: 'GET', headers: { 'Content-Type': 'application/json' }
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw Error(`${response.status}: ${response.statusText}`)
+            }
+            return response.json()
+          })
+          .then(response => {
+            let msg = makeSuccessMessage(response);
+            $(statusId).html(
+              `<div class="alert alert-success mt-3 text-small" role="alert">\
+                ${msg}\
+              </div>`);
+            $(buttonId).html(originalText);
             $(buttonId).removeClass('disabled');
-          },
-          error: function(xhr) {
-            console.debug(xhr);
+          })
+          .catch((error) => {
+            console.error(error);
 
-            let msg = xhr.responseJSON ? `${xhr.status}: ${xhr['responseJSON']['error']}` : `${xhr.status}: ${xhr.statusText}`
-            $(statusId).html(`\
-              <div class="alert alert-danger mt-3 text-small" role="alert">\
-                ${msg}
-              </div>`)
-
-            // Reset to the original button state.
-            $(buttonId).html('Match activities to map');
+            if (statusId) {
+              $(statusId).html(`<div class="alert alert-danger mt-3 text-small" role="alert">${error}</div>`);
+            }
+            $(buttonId).html(originalText);
             $(buttonId).removeClass('disabled');
+          });
+      }
+
+      //========================================================================
+
+      $('#fetch-button').on('click', (e) => {
+        let scope = $('#full-history-checkbox').prop('checked') ? 'all' : 'week_only';
+        callServerFunction(
+          '#fetch-button',
+          '#fetch-status',
+          '/action/pull-activities',
+          {
+            'scope': scope
+          },
+          (r) => {
+            return `Found ${r["new_count"]} new, ${r["total_count"]} total. Refresh to see new activities below.`;
           }
-        });
+        )
+      });
+
+      $('#match-button').on('click', (e) => {
+        let scope = $('#match-all-checkbox').prop('checked') ? 'all' : 'new_only';
+        callServerFunction(
+          '#match-button',
+          '#match-status',
+          '/action/match-activities',
+          {
+            'scope': scope
+          },
+          (r) => {
+            return `Matched ${r["unmatched_ids"]} activities. Go to the map to see new coverage.`;
+          }
+        )
+      });
+
+      $('#clear-coverage').on('click', (e) => {
+        let scope = $('#match-all-checkbox').prop('checked') ? 'all' : 'new_only';
+        callServerFunction(
+          '#clear-coverage',
+          '#danger-status',
+          '/action/clear-coverage',
+          {},
+          (r) => {
+            return `Cleared coverage data. You can re-run from a clean slate now.`;
+          }
+        )
       });
     </script>
   </body>
