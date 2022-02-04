@@ -1,28 +1,38 @@
-import requests
 import logging
+from unittest.mock import DEFAULT
 import polyline
+import os
 
 from flask import Flask, render_template, jsonify, request
 
-import util.database as db
+import util.firebase_api as db
 import util.strava_api as strava
 from util.timestamps import epoch_timestamp_now
 import util.matching as matching
 from util.file_util import *
 
+from dotenv import load_dotenv
+
+#===============================================================================
+
+load_dotenv() # Take environment variables from .env.
+
 app = Flask(__name__)
 logger = app.logger
 STRAVA_TOKEN = strava.get_token_always_valid()
+DEFAULT_USER_ID = str(os.getenv('DEFAULT_USER_ID'))
 
+#===============================================================================
+#============================= SERVER ROUTES ===================================
 #===============================================================================
 
 @app.route('/')
 @app.route('/map')
-def render_mapbox():
+def render_map():
   """
   Render the MapBox map visualization. This is the default page.
   """
-  return render_template("mapbox.html")
+  return render_template("map.html")
 
 #===============================================================================
 
@@ -32,29 +42,13 @@ def render_activities():
   Show the activities page.
   """
   try:
-    d = db.get_activities()
+    d = db.get_activity_data(DEFAULT_USER_ID)
 
   except Exception as e:
     logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
-  return render_template("activities.html", items=d.values())
-
-#===============================================================================
-
-@app.route('/admin')
-def render_admin():
-  """
-  Show the activities page.
-  """
-  try:
-    d = db.get_activities()
-
-  except Exception as e:
-    logger.exception(e)
-    return jsonify({'error': str(e)}), 300
-
-  return render_template("admin.html", items=d.values())
+  return render_template("activities.html", activity_data=[] if d is None else d.values())
 
 #===============================================================================
 
@@ -67,6 +61,24 @@ def render_stats():
 
 #===============================================================================
 
+@app.route('/admin')
+def render_admin():
+  """
+  Show the activities page.
+  """
+  try:
+    d = db.get_activity_data(DEFAULT_USER_ID)
+
+  except Exception as e:
+    logger.exception(e)
+    return jsonify({'error': str(e)}), 300
+
+  return render_template("admin.html", activity_data=[] if d is None else d.values())
+
+#===============================================================================
+#============================= SERVER ACTIONS ==================================
+#===============================================================================
+
 @app.route('/action/pull-activities')
 def update_activities():
   """
@@ -77,43 +89,37 @@ def update_activities():
   """
   try:
     # If unspecified, just do a fast pull.
-    scope_arg = request.args.get('scope', 'week_only', type=str)
-    logger.info('scope is {}'.format(scope_arg))
+    scope = request.args.get('scope', 'week_only', type=str)
+    logger.info('scope is {}'.format(scope))
 
     # Optionally limit query to a certain timeframe.
-    if scope_arg == 'all':
+    if scope == 'all':
       window_time = None
-    elif scope_arg == 'day_only':
+    elif scope == 'day_only':
       window_time = epoch_timestamp_now() - 86400 # Sec per day.
-    elif scope_arg == 'week_only':
+    elif scope == 'week_only':
       window_time = epoch_timestamp_now() - 604800 # Sec per week.
-    elif scope_arg == 'month_only':
+    elif scope == 'month_only':
       window_time = epoch_timestamp_now() - 2592000 # Sec per month.
     else:
       window_time = epoch_timestamp_now() - 604800 # Sec per week.
 
-    existing_ids = db.get_activities_id_set()
+    existing_ids = db.get_activity_ids(DEFAULT_USER_ID)
     maybe_new_ids = strava.get_activities_id_set(STRAVA_TOKEN, after_time=window_time)
 
-    if scope_arg is None or scope_arg == 'all':
+    if scope is None or scope == 'all':
       new_ids = maybe_new_ids
     else:
       new_ids = maybe_new_ids - existing_ids
 
     new_count = len(new_ids)
 
-    for i, id in enumerate(new_ids):
-      logger.debug('processing #{}/{} (id={})'.format(i+1, len(new_ids), id))
+    for i, activity_id in enumerate(new_ids):
+      logger.debug('processing #{}/{} (id={})'.format(i+1, len(new_ids), activity_id))
 
-      # Get activity data from Strava.
-      r = strava.get_activity_by_id(STRAVA_TOKEN, id)
-
-      # Add it to our database.
-      db.add_or_update_activity(id, r)
-
-      # Also store the decoded coordinates from the activity for faster client-side lookup later.
-      coords = [[c[1], c[0]] for c in polyline.decode(r['map']['polyline'])]
-      db.add_or_update_activity_features(id, {'coordinates': coords, 'type': 'LineString'})
+      # Get activity data from Strava and add (the relevant part) to our database.
+      activity_data = strava.get_activity_by_id(STRAVA_TOKEN, activity_id)
+      db.add_or_update_activity(DEFAULT_USER_ID, activity_id, activity_data)
 
     return jsonify({'total_count': len(maybe_new_ids), 'new_count': new_count}), 200
 
@@ -138,26 +144,29 @@ def compute_stats():
 
 #===============================================================================
 
-@app.route('/action/match-activities')
-def match_activities():
+@app.route('/action/match-activities/<map_id>')
+def match_activities(map_id):
   """
-  Match GPS points from an activity with edges in the road network.
+  Match GPS points from activities with edges in the road network.
   """
   try:
-    # If unspecified, just process new activities (fast option).
-    scope_arg = request.args.get('scope', 'new_only', type=str)
-    assert(scope_arg in ['all', 'new_only'])
+    if map_id not in ['CAMBRIDGE_MA_US']:
+      raise ValueError('Unknown map_id {}'.format(map_id))
 
-    activity_ids = db.get_activities_id_set()
-    matched_ids = db.get_matched_id_set()
+    # If unspecified, just process new activities (fast option).
+    scope = request.args.get('scope', 'new_only', type=str)
+    assert(scope in ['all', 'new_only'])
+
+    activity_ids = db.get_activity_ids(DEFAULT_USER_ID)
+    matched_ids = db.get_processed_activity_ids_for_map(DEFAULT_USER_ID, map_id)
 
     # Figure out which activities need to be processed.
-    if scope_arg == 'new_only':
+    if scope == 'new_only':
       unmatched_ids = activity_ids - matched_ids
     else:
       unmatched_ids = activity_ids
 
-    logger.info('Matching {} new activity ids (scope is {})'.format(len(unmatched_ids), scope_arg))
+    logger.info('Matching {} new activity ids (scope is {})'.format(len(unmatched_ids), scope))
 
     nodes_df, edges_df = matching.load_graph(graph_folder('drive_graph.gpkg'))
     logger.debug('Loaded graph')
@@ -169,13 +178,13 @@ def match_activities():
     for activity_id in unmatched_ids:
       logger.debug('Processing {}'.format(activity_id))
 
-      activity_data = db.get_activity_by_id(activity_id)
-      decoded = polyline.decode(activity_data['map']['polyline'])
-      query_points = matching.resample_points([[p[1], p[0]] for p in decoded], spacing=15.0)
+      activity_data = db.get_activity_by_id(DEFAULT_USER_ID, activity_id)
+      query_points = matching.resample_points(activity_data['geojson']['geometry'], spacing=15.0)
       matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=30)
+      matched_edge_ids = set([matched_edges.iloc[i]['osmid'] for i in range(len(matched_edges))])
 
       logger.debug('Updating database')
-      db.update_coverage('cambridge', matched_edges, activity_id)
+      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_edge_ids)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 
@@ -185,13 +194,13 @@ def match_activities():
 
 #===============================================================================
 
-@app.route('/action/activity/<id>')
-def get_activity_json(id):
+@app.route('/action/activity/<activity_id>')
+def get_activity_json(activity_id):
   """
   Get the JSON for an activity (debugging).
   """
   try:
-    r = strava.get_activity_by_id(STRAVA_TOKEN, id)
+    r = strava.get_activity_by_id(STRAVA_TOKEN, activity_id)
     return jsonify(r), 200
 
   except Exception as e:
@@ -200,10 +209,11 @@ def get_activity_json(id):
 
 #===============================================================================
 
-@app.route('/action/clear-coverage')
-def clear_coverage():
+@app.route('/action/clear-coverage/<map_id>')
+def clear_coverage(map_id):
   try:
     # db.clear_coverage()
+    db.clear_user_coverage(DEFAULT_USER_ID, map_id)
     return jsonify('ok'), 200
 
   except Exception as e:
