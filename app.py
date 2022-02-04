@@ -181,10 +181,15 @@ def match_activities(map_id):
       activity_data = db.get_activity_by_id(DEFAULT_USER_ID, activity_id)
       query_points = matching.resample_points(activity_data['geojson']['geometry'], spacing=15.0)
       matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=30)
-      matched_edge_ids = set([matched_edges.iloc[i]['osmid'] for i in range(len(matched_edges))])
+
+      matched_ids = []
+      for i in range(len(matched_edges)):
+        from_id = str(matched_edges.iloc[i]['from'])
+        to_id = str(matched_edges.iloc[i]['to'])
+        matched_ids.append(from_id + '-' + to_id)
 
       logger.debug('Updating database')
-      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_edge_ids)
+      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_ids)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 

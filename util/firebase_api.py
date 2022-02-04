@@ -92,12 +92,15 @@ def update_coverage(user_id, map_id, activity_id, edge_ids):
   """
   p = {}
 
-  for i in range(len(edge_ids)):
-    p[str(edge_ids[i])] = {'completed_by': {}}
-    p[str(edge_ids[i])]['completed_by'][str(activity_id)] = 1 # Placeholder.
+  for e in edge_ids:
+    p[str(e)] = {'completed_by': {str(activity_id): 1}}
 
-  ref = db.reference('user_data').child(user_id).child(map_id).child('coverage')
+  ref = db.reference('user_data').child(user_id).child('coverage').child(map_id)
   ref.update(p)
+
+  # Now indicate that this activity was processed for this map.
+  ref = db.reference('user_data').child(user_id).child('processed').child(map_id)
+  ref.update({activity_id: 1})
 
 #===============================================================================
 
@@ -137,5 +140,5 @@ def clear_user_activities(user_id):
 
 
 def clear_user_coverage(user_id, map_id):
-  ref = db.reference('user_data').child(user_id).child(map_id).child('coverage')
+  ref = db.reference('user_data').child(user_id).child('coverage').child(map_id)
   ref.delete()
