@@ -75,8 +75,8 @@
       // https://docs.mapbox.com/api/maps/styles/
       const map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/light-v10',
-        // style: 'mapbox://styles/mapbox/dark-v10',
+        // style: 'mapbox://styles/mapbox/light-v10',
+        style: 'mapbox://styles/mapbox/dark-v10',
         center: [lng, lat],
         zoom: 14
       });
@@ -103,7 +103,7 @@
                 featureList.push({'type': 'Feature', 'geometry': edge_data['geometry']});
               }
             );
-            addFeatureCollection(featureList, layerName, 'green');
+            addFeatureCollection(featureList, layerName, '#00FF00');
           } else {
             console.log('Could not load matched activity geometries');
           }
@@ -151,7 +151,7 @@
         // Show the Cambridge city limits.
         map.addSource('cambridge-geojson', {
           type: 'geojson',
-          data: '/static/geojson/cambridge.geojson'
+          data: '/static/map_boundaries/CAMBRIDGE_MA_US.geojson'
         });
 
         map.addLayer({
@@ -160,13 +160,13 @@
           source: 'cambridge-geojson',
           paint: {
             'line-width': 4,
-            'line-color': 'red',
+            'line-color': '#FF0000',
           }
         });
 
         map.addSource('edges-geojson', {
           type: 'geojson',
-          data: '/static/geojson/drive_edges.geojson'
+          data: '/static/graph_geojson/CAMBRIDGE_MA_US.geojson'
         });
 
         map.addLayer({
@@ -175,7 +175,7 @@
           source: 'edges-geojson',
           paint: {
             'line-width': 2,
-            'line-color': 'red',
+            'line-color': '#FF0000',
             'line-opacity': 0.5
           }
         });

@@ -180,7 +180,7 @@ def match_activities(map_id):
       logger.debug('Processing {}'.format(activity_id))
 
       activity_data = db.get_activity_by_id(DEFAULT_USER_ID, activity_id)
-      query_points = matching.resample_points(activity_data['geojson']['geometry'], spacing=15.0)
+      query_points = matching.resample_points(activity_data['geometry']['coordinates'], spacing=15.0)
       matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=30)
 
       matched_ids = []
