@@ -44,6 +44,50 @@
           </li>
         </ul>
       </div>
+
+      {% for key in coverage %}
+        <h3 class="mt-5">MAP COVERAGE: {{ key }}</h3>
+        <div class="card mt-3">
+            <li class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div class="float-left card-text">Completed segments</div>
+                <div class="float-right card-text">
+                  {{ '%d'|format(coverage[key]['completed_edges']) }} / {{ '%d'|format(coverage[key]['total_edges']) }}
+                </div>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div class="float-left card-text">Completed distance</div>
+                <div class="float-right card-text">
+                  {{ '%.1f'|format(coverage[key]['completed_distance']) }} / {{ '%.1f'|format(coverage[key]['total_distance']) }} mi
+                </div>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div class="float-left card-text">Percent coverage</div>
+                <div class="float-right card-text">
+                  {% if coverage[key]['percent_coverage'] is defined %}
+                    {{ '%.1f'|format(coverage[key]['percent_coverage']) }} %
+                  {% else %}
+                      N/A
+                  {% endif %}
+              </div>
+            </li>
+          </ul>
+          <!-- Only shows bar if variable is defined. -->
+          {% if coverage[key]['percent_coverage'] is defined %}
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ coverage[key]['percent_coverage'] }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              {{ '%.1f'|format(coverage[key]['percent_coverage']) }}%
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+
     </div>
     <script>
       // Control fetch button behavior.

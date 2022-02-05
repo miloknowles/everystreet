@@ -57,7 +57,8 @@ def render_stats():
   """
   Show the stats page.
   """
-  return render_template('stats.html', **db.get_user_stats(DEFAULT_USER_ID))
+  stats = db.get_user_stats(DEFAULT_USER_ID)
+  return render_template('stats.html', **stats)
 
 #===============================================================================
 
@@ -168,7 +169,7 @@ def match_activities(map_id):
 
     logger.info('Matching {} new activity ids (scope is {})'.format(len(unmatched_ids), scope))
 
-    nodes_df, edges_df = matching.load_graph(graph_folder('drive_graph.gpkg'))
+    nodes_df, edges_df = matching.load_graph(graph_data_folder('{}.gpkg'.format(map_id)))
     logger.debug('Loaded graph')
 
     # Build a KDtree for fast queries.
@@ -184,19 +185,20 @@ def match_activities(map_id):
 
       matched_ids = []
       edge_geometries = []
+      edge_lengths = []
       for i in range(len(matched_edges)):
         from_id = str(matched_edges.iloc[i]['from'])
         to_id = str(matched_edges.iloc[i]['to'])
         matched_ids.append(from_id + '-' + to_id)
-
         coords = matched_edges.iloc[i]['geometry'].coords
         geom = {
           'type': 'LineString',
           'coordinates': [[p[0], p[1]] for p in coords] # TODO
         }
         edge_geometries.append(geom)
+        edge_lengths.append(matched_edges.iloc[i]['length'])
 
-      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_ids, edge_geometries)
+      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_ids, edge_geometries, edge_lengths)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 

@@ -1,5 +1,6 @@
 import base64
 import json
+from math import radians
 import os
 
 import polyline
@@ -7,6 +8,9 @@ import polyline
 import firebase_admin as fa
 import firebase_admin.db as db
 from firebase_admin import credentials
+
+from util.file_util import *
+import util.matching as matching
 
 from dotenv import load_dotenv
 
@@ -84,7 +88,7 @@ def add_or_update_activity(user_id, activity_id, activity_data):
 
 #===============================================================================
 
-def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geometries):
+def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geometries, edge_lengths):
   """
   Save completed edges to the database for visualization and coverage metrics.
   """
@@ -93,7 +97,8 @@ def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geometries):
   for i, e in enumerate(edge_ids):
     p[str(e)] = {
       'completed_by': {str(activity_id): 1},
-      'geometry': edge_geometries[i]
+      'geometry': edge_geometries[i],
+      'length': edge_lengths[i]
     }
 
   ref = db.reference('user_data').child(user_id).child('coverage').child(map_id)
@@ -120,10 +125,35 @@ def update_user_stats(user_id):
     total_distance += 0.621371 * item['distance'] / 1000
     total_time += item['moving_time'] / 3600.0
 
+  map_id = 'CAMBRIDGE_MA_US'
+
+  # Get completed edges from the databse.
+  r = db.reference('user_data').child(user_id).child('coverage').child(map_id).get()
+
+  # Get the entire edge set from disk.
+  _, edges_df = matching.load_graph(graph_data_folder('{}.gpkg'.format(map_id)))
+
+  completed_distance = 0
+  for key in r:
+    completed_distance += r[key]['length']
+
+  meters_to_mi = 0.621371 / 1000
+  total_map_dist = edges_df['length'].sum() * meters_to_mi
+  compl_map_dist = completed_distance * meters_to_mi
+
   p = {
     'total_distance': total_distance,
     'total_activities': len(activities.values()),
     'total_time': total_time,
+    'coverage': {
+      map_id: {
+        'total_distance': total_map_dist,
+        'completed_distance': compl_map_dist,
+        'total_edges': len(edges_df),
+        'completed_edges': len(r) if r is not None else 0,
+        'percent_coverage': 100.0 * compl_map_dist / total_map_dist
+      }
+    }
   }
 
   stats_ref.update(p)
