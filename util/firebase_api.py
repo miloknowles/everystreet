@@ -86,14 +86,17 @@ def add_or_update_activity(user_id, activity_id, activity_data):
 
 #===============================================================================
 
-def update_coverage(user_id, map_id, activity_id, edge_ids):
+def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geojson):
   """
   Save completed edges to the database for visualization and coverage metrics.
   """
   p = {}
 
-  for e in edge_ids:
-    p[str(e)] = {'completed_by': {str(activity_id): 1}}
+  for i, e in enumerate(edge_ids):
+    p[str(e)] = {
+      'completed_by': {str(activity_id): 1},
+      'geojson': edge_geojson[i]
+    }
 
   ref = db.reference('user_data').child(user_id).child('coverage').child(map_id)
   ref.update(p)

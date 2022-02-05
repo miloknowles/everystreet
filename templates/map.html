@@ -62,9 +62,10 @@
       //========================================================================
 
       // State variables.
-      var DID_LOAD_COVERAGE = false;
-      var DID_LOAD_MATCHED = false;
-      var DID_LOAD_RAW = false;
+      var didLoadCoverage = false;
+      var didLoadRaw = false;
+      var userId = '12345678';
+      var mapId = 'CAMBRIDGE_MA_US';
 
       // Centered on 12W.
       var lat = 42.36654037918643
@@ -82,21 +83,25 @@
 
       //======================================================================
 
-      function loadCoverageMap() {
-        let layerName = 'matched-feature-collection';
+      function loadCoverageMap(user_id, map_id) {
+        let layerName = 'coverage-layer';
         toggleVisibility(layerName, $('#show-coverage').prop('checked'));
 
-        if (DID_LOAD_MATCHED) {
+        if (didLoadCoverage) {
           return;
         }
-        DID_LOAD_MATCHED = true;
+        didLoadCoverage = true;
+        let ref = db.ref(firebaseDatabase, `user_data/${user_id}/coverage/${map_id}`);
 
-        db.get(db.ref(firebaseDatabase, 'coverage/cambridge')).then((snapshot) => {
+        db.get(ref).then((snapshot) => {
           if (snapshot.exists()) {
             // Collect all of the geojson features into an array.
-            var featureList = [];
+            let featureList = [];
             Object.entries(snapshot.val()).forEach(
-              ([edge_id, feature]) => { featureList.push(feature['feature']); }
+              ([edge_id, edge_data]) => {
+                let heat = edge_data['completed_by'].length; // TODO
+                featureList.push({'type': 'Feature', 'geometry': edge_data['geojson']});
+              }
             );
             addFeatureCollection(featureList, layerName, 'green');
           } else {
@@ -109,21 +114,26 @@
 
       //======================================================================
 
-      function loadRawMap() {
-        let layerName = 'activity-feature-collection';
+      function loadRawMap(user_id, map_id) {
+        let layerName = 'raw-activity-layer';
         toggleVisibility(layerName, $('#show-raw').prop('checked'));
 
-        if (DID_LOAD_RAW) {
+        if (didLoadRaw) {
           return;
         }
-        DID_LOAD_RAW = true; // Block future clicks.
+        didLoadRaw = true; // Block future clicks.
 
-        db.get(db.ref(firebaseDatabase, 'activity_features')).then((snapshot) => {
+        let ref = db.ref(firebaseDatabase, `user_data/${user_id}/activity_data`);
+
+        db.get(ref).then((snapshot) => {
           if (snapshot.exists()) {
             // Collect all of the geojson features into an array.
-            var featureList = [];
+            let featureList = [];
             Object.entries(snapshot.val()).forEach(
-              ([segment_id, feature]) => { featureList.push(feature); }
+              ([activity_id, activity_data]) => {
+                // Make this into a Feature, which contains a geometry.
+                featureList.push({'type': 'Feature', 'geometry': activity_data['geojson']});
+              }
             );
             addFeatureCollection(featureList, layerName, 'blue');
           } else {
@@ -172,11 +182,11 @@
 
         //======================================================================
 
-        $('#show-coverage').on('click', (e) => loadCoverageMap());
-        $('#show-raw').on('click', (e) => loadRawMap());
+        $('#show-coverage').on('click', (e) => loadCoverageMap(userId, mapId));
+        $('#show-raw').on('click', (e) => loadRawMap(userId, mapId));
 
         // Show this one on map load.
-        loadCoverageMap();
+        loadCoverageMap(userId, mapId);
 
         $('#show-boundary').on('click', function(e) {
           let layerName = 'cambridge-boundary';
