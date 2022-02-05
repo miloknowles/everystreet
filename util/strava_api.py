@@ -1,9 +1,7 @@
 import os
 import requests
 import urllib3
-import csv
 from dotenv import load_dotenv
-from pprint import pprint
 
 load_dotenv() # Take environment variables from .env.
 
@@ -14,7 +12,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def get_token_always_valid():
   """
-  Get a token that is up-to-date.
+  Get a Strava API token that is always up-to-date.
   """
   auth_url = "https://www.strava.com/oauth/token"
 

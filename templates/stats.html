@@ -9,81 +9,85 @@
         Compute stats
       </button>
       <div id="fetch-status"></div>
-      <h3 class="mt-3">ACTIVITIES</h3>
+      <h3 class="mt-3">ACTIVITIES OVERVIEW</h3>
       <div class="card mt-3">
         <ul class="list-group list-group-flush">
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
               <div class="float-left card-text">Total activities</div>
-              <div id="total-activities" class="float-end card-text">{{ total_activities }}</div>
+              <div id="total-activities" class="float-end card-text">{{ total_activities or 'N/A' }}</div>
             </div>
           </li>
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
               <div class="float-left card-text">Total distance</div>
-              <div id="total-distance" class="float-right card-text">{{ '%.1f'|format(total_distance) }} mi</div>
-            </div>
-          </li>
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Average distance</div>
-              <div id="avg-distance" class="float-right card-text">{{ '%.1f'|format(avg_distance) }} mi</div>
+              <div id="total-distance" class="float-right card-text">
+                {% if total_distance is defined %}
+                  {{ '%.1f'|format(total_distance) }} mi
+                {% else %}
+                  N/A
+                {% endif %}
+              </div>
             </div>
           </li>
           <li class="list-group-item">
             <div class="d-flex w-100 justify-content-between">
               <div class="float-left card-text">Total time</div>
-              <div id="total-time" class="float-right card-text">{{ '%.1f'|format(total_time) }} hrs</div>
-            </div>
-          </li>
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Total elevation gain</div>
-              <div id="total-elevation-gain" class="float-right card-text">{{ '%.1f'|format(total_elevation_gain) }} m</div>
+              <div id="total-time" class="float-right card-text">
+                {% if total_time is defined %}
+                  {{ '%.1f'|format(total_time) }} hrs
+                {% else %}
+                    N/A
+                {% endif %}
+              </div>
             </div>
           </li>
         </ul>
       </div>
 
-      <h3 class="mt-5">MAP COVERAGE</h3>
-      <div class="card mt-3">
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Total street length</div>
-              <div class="float-right card-text">{{ '%.1f'|format(total_map_distance) }} mi</div>
+      {% for key in coverage %}
+        <h3 class="mt-5">MAP COVERAGE: {{ key }}</h3>
+        <div class="card mt-3">
+            <li class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div class="float-left card-text">Completed segments</div>
+                <div class="float-right card-text">
+                  {{ '%d'|format(coverage[key]['completed_edges']) }} / {{ '%d'|format(coverage[key]['total_edges']) }}
+                </div>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div class="float-left card-text">Completed distance</div>
+                <div class="float-right card-text">
+                  {{ '%.1f'|format(coverage[key]['completed_distance']) }} / {{ '%.1f'|format(coverage[key]['total_distance']) }} mi
+                </div>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <div class="float-left card-text">Percent coverage</div>
+                <div class="float-right card-text">
+                  {% if coverage[key]['percent_coverage'] is defined %}
+                    {{ '%.1f'|format(coverage[key]['percent_coverage']) }} %
+                  {% else %}
+                      N/A
+                  {% endif %}
+              </div>
+            </li>
+          </ul>
+          <!-- Only shows bar if variable is defined. -->
+          {% if coverage[key]['percent_coverage'] is defined %}
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ coverage[key]['percent_coverage'] }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              {{ '%.1f'|format(coverage[key]['percent_coverage']) }}%
             </div>
-          </li>
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Completed street length</div>
-              <div class="float-right card-text">{{ '%.1f'|format(complete_map_distance) }} mi</div>
-            </div>
-          </li>
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Total street segments</div>
-              <div class="float-right card-text">{{ '%d'|format(total_map_edges) }}</div>
-            </div>
-          </li>
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Completed street segments</div>
-              <div class="float-right card-text">{{ '%d'|format(complete_map_edges) }}</div>
-            </div>
-          </li>
-          <li class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <div class="float-left card-text">Percent coverage</div>
-              <div class="float-right card-text">{{ '%.1f'|format(percent_coverage) }}%</div>
-            </div>
-          </li>
-        </ul>
-        <div class="progress">
-          <div class="progress-bar" role="progressbar" style="width: {{ percent_coverage }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-            {{ '%.1f'|format(percent_coverage) }}%
           </div>
+          {% endif %}
         </div>
-      </div>
+      {% endfor %}
+
+
     </div>
     <script>
       // Control fetch button behavior.
