@@ -57,7 +57,7 @@ def render_stats():
   """
   Show the stats page.
   """
-  return render_template('stats.html', **db.get_database_stats())
+  return render_template('stats.html', **db.get_user_stats(DEFAULT_USER_ID))
 
 #===============================================================================
 
@@ -135,7 +135,7 @@ def compute_stats():
   Recompute stats over the database.
   """
   try:
-    r = db.update_stats()
+    r = db.update_user_stats(DEFAULT_USER_ID)
     return jsonify(r), 200
 
   except Exception as e:

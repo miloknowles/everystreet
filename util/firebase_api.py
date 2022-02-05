@@ -58,7 +58,8 @@ def get_user_stats(user_id):
   """
   Get user stats from the database.
   """
-  return db.reference('user_data').child(user_id).child('stats').get()
+  stats = db.reference('user_data').child(user_id).child('stats').get()
+  return {} if stats is None else stats
 
 #===============================================================================
 
