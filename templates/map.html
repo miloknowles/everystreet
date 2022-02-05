@@ -100,12 +100,12 @@
             Object.entries(snapshot.val()).forEach(
               ([edge_id, edge_data]) => {
                 let heat = edge_data['completed_by'].length; // TODO
-                featureList.push({'type': 'Feature', 'geometry': edge_data['geojson']});
+                featureList.push({'type': 'Feature', 'geometry': edge_data['geometry']});
               }
             );
             addFeatureCollection(featureList, layerName, 'green');
           } else {
-            console.log('Could not load matched activity polylines');
+            console.log('Could not load matched activity geometries');
           }
         }).catch((error) => {
           console.error(error);
@@ -132,12 +132,12 @@
             Object.entries(snapshot.val()).forEach(
               ([activity_id, activity_data]) => {
                 // Make this into a Feature, which contains a geometry.
-                featureList.push({'type': 'Feature', 'geometry': activity_data['geojson']});
+                featureList.push({'type': 'Feature', 'geometry': activity_data['geometry']});
               }
             );
             addFeatureCollection(featureList, layerName, 'blue');
           } else {
-            console.log('Could not load raw activity polylines');
+            console.log('Could not load raw activity geometries');
           }
         }).catch((error) => {
           console.error(error);

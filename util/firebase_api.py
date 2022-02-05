@@ -68,7 +68,7 @@ def add_or_update_activity(user_id, activity_id, activity_data):
   """
 
   # Also store the decoded coordinates from the activity for faster client-side lookup later.
-  geom = [[c[1], c[0]] for c in polyline.decode(activity_data['map']['polyline'])]
+  points = [[c[1], c[0]] for c in polyline.decode(activity_data['map']['polyline'])]
 
   db.reference('user_data').child(user_id).child('activity_data').child(str(activity_id)).update(
     {
@@ -77,16 +77,13 @@ def add_or_update_activity(user_id, activity_id, activity_data):
       'distance': activity_data['distance'],
       'start_date': activity_data['start_date'],
       'moving_time': activity_data['moving_time'],
-      'geojson': {
-        'type': 'Feature',
-        'geometry': geom
-      }
+      'geometry': {'type': 'LineString', 'coordinates': points}
     }
   )
 
 #===============================================================================
 
-def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geojson):
+def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geometries):
   """
   Save completed edges to the database for visualization and coverage metrics.
   """
@@ -95,7 +92,7 @@ def update_coverage(user_id, map_id, activity_id, edge_ids, edge_geojson):
   for i, e in enumerate(edge_ids):
     p[str(e)] = {
       'completed_by': {str(activity_id): 1},
-      'geojson': edge_geojson[i]
+      'geometry': edge_geometries[i]
     }
 
   ref = db.reference('user_data').child(user_id).child('coverage').child(map_id)

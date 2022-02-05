@@ -183,7 +183,7 @@ def match_activities(map_id):
       matched_edges = matching.match_points_to_edges(query_points, nodes_df, edges_df, kdtree, max_node_dist=30)
 
       matched_ids = []
-      edge_geojson = []
+      edge_geometries = []
       for i in range(len(matched_edges)):
         from_id = str(matched_edges.iloc[i]['from'])
         to_id = str(matched_edges.iloc[i]['to'])
@@ -194,10 +194,9 @@ def match_activities(map_id):
           'type': 'LineString',
           'coordinates': [[p[0], p[1]] for p in coords] # TODO
         }
-        edge_geojson.append(geom)
+        edge_geometries.append(geom)
 
-      logger.debug('Updating database')
-      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_ids, edge_geojson)
+      db.update_coverage(DEFAULT_USER_ID, map_id, activity_id, matched_ids, edge_geometries)
 
     return jsonify({'unmatched_ids': len(unmatched_ids)}), 200
 
