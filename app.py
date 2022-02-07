@@ -1,15 +1,14 @@
 import logging
 from unittest.mock import DEFAULT
-import polyline
 import os
 
 from flask import Flask, render_template, jsonify, request
 
-import util.firebase_api as db
-import util.strava_api as strava
-from util.timestamps import epoch_timestamp_now
-import util.matching as matching
-from util.file_util import *
+import python.firebase_api as db
+import python.strava_api as strava
+from python.timestamps import epoch_timestamp_now
+import python.matching as matching
+from python.file_util import *
 
 from dotenv import load_dotenv
 
