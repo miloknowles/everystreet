@@ -2,6 +2,7 @@
 
 body {
   font-family: 'Space Mono', 'Roboto Mono', 'Roboto';
+  font-size: 12px;
 }
 
 p {
@@ -61,4 +62,8 @@ h3 {
 
 .progress-bar {
   background-color: green;
+}
+
+.form-control {
+  font-size: 12px;
 }

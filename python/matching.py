@@ -63,7 +63,7 @@ def match_points_to_edges(points, nodes_df, edges_df, kdtree, max_node_dist=40):
     points (np.ndarray) : 2D array of [lng, lat] coordinates.
     nodes_df (GeoDataFrame) : dataframe with network nodes.
     edges_df (GeoDataFrame) : dataframe with network edges.
-    kdtree (cKDTree) : a KDtree for quick nearest neighbor lookups.
+    kdtree (ktree) : a KDtree for quick nearest neighbor lookups.
     max_node_dist (float) : maximum distance for matching a point to a node.
 
   Returns:
@@ -93,6 +93,19 @@ def match_points_to_edges(points, nodes_df, edges_df, kdtree, max_node_dist=40):
       pd.Series(query_gdf.distance(nn0), name='dist0'),
       pd.Series(query_gdf.distance(nn1), name='dist1'),
       pd.Series(query_gdf.distance(nn2), name='dist2')
+    ],
+    axis=1)
+
+  completed_edges = []
+  # Put nearest neighbor nodes and distances in one df.
+  nn_data = pd.concat(
+    [
+      pd.Series(nodes_df.iloc[idxs[:,0]].reset_index(drop=False)['osmid'], name='osmid0', dtype=np.int64),
+      pd.Series(nodes_df.iloc[idxs[:,1]].reset_index(drop=False)['osmid'], name='osmid1', dtype=np.int64),
+      pd.Series(nodes_df.iloc[idxs[:,2]].reset_index(drop=False)['osmid'], name='osmid2', dtype=np.int64),
+      pd.Series(dists[:,0], name='dist0'),
+      pd.Series(dists[:,1], name='dist1'),
+      pd.Series(dists[:,2], name='dist2')
     ],
     axis=1)
 

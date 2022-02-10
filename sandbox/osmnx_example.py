@@ -14,7 +14,7 @@ from shapely.geometry import Polygon
 import polyline
 
 sys.path.append('..')
-from util.firebase_api import get_activity_by_id, get_matched_feature_by_id
+from python.firebase_api import get_activity_by_id, get_matched_feature_by_id
 
 graph_file_fmt = '../static/geojson/{}_graph.gpkg'
 

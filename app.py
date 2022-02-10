@@ -1,15 +1,14 @@
 import logging
 from unittest.mock import DEFAULT
-import polyline
 import os
 
 from flask import Flask, render_template, jsonify, request
 
-import util.firebase_api as db
-import util.strava_api as strava
-from util.timestamps import epoch_timestamp_now
-import util.matching as matching
-from util.file_util import *
+import python.firebase_api as db
+import python.strava_api as strava
+from python.timestamps import epoch_timestamp_now
+import python.matching as matching
+from python.file_util import *
 
 from dotenv import load_dotenv
 
@@ -75,6 +74,20 @@ def render_admin():
     return jsonify({'error': str(e)}), 300
 
   return render_template("admin.html", activity_data=[] if d is None else d.values())
+
+
+@app.route('/about')
+def render_about():
+  """
+  Show the about page.
+  """
+  return render_template('about.html')
+
+
+@app.route('/test')
+def render_test():
+  return render_template('test.html')
+
 
 #===============================================================================
 #============================= SERVER ACTIONS ==================================

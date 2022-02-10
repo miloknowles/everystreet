@@ -9,3 +9,8 @@ cache/
 # Ignore these big files.
 walk_edges.geojson
 walk_graph.gpkg
+
+# Don't track deployment packages for AWS.
+*.zip
+deps_layer
+tmp

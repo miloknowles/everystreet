@@ -4,7 +4,7 @@
 
   // https://stackoverflow.com/questions/5786851/define-a-global-variable-in-a-javascript-function
   // Assign these variables to 'window' to make them global.
-  import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.6.5/firebase-database.js';
+  import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/9.6.5/firebase-database.js';
 
   window.firebaseApp = initializeApp({
     apiKey: "AIzaSyBEuvLFpyt0-VSO5k-Zmx88kytvymrU_Z0",
@@ -15,5 +15,6 @@
   window.db = {
     ref: ref,
     get: get,
+    update: update
   }
 </script>

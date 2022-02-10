@@ -9,8 +9,8 @@ import firebase_admin as fa
 import firebase_admin.db as db
 from firebase_admin import credentials
 
-from util.file_util import *
-import util.matching as matching
+from python.file_util import *
+import python.matching as matching
 
 from dotenv import load_dotenv
 
