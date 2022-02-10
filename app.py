@@ -75,6 +75,20 @@ def render_admin():
 
   return render_template("admin.html", activity_data=[] if d is None else d.values())
 
+
+@app.route('/about')
+def render_about():
+  """
+  Show the about page.
+  """
+  return render_template('about.html')
+
+
+@app.route('/test')
+def render_test():
+  return render_template('test.html')
+
+
 #===============================================================================
 #============================= SERVER ACTIONS ==================================
 #===============================================================================

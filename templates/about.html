@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% include 'head.html' %}
+  <body>
+    {% include 'navbar.html' %}
+    <div class="container">
+      <div class="row mt-5">
+        <div class="col">
+          <h2>About</h2>
+          <p>This project is built and maintained by <a href="https://www.miloknowles.com">Milo Knowles</a>.</p>
+          <p class="fw-bold" >
+            I'm planning to add support for more cities and users soon! If you're interesting in mapping your own runs/rides, sign up for early access below.
+          </p>
+        </div>
+        <div class="row mt-5">
+          <div class="card">
+            <div class="card-body">
+              <form class="row g-3 needs-validation" novalidate>
+                <div class="col-md-12">
+                  <label for="emailInput" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="emailInput" placeholder="Enter your email" required>
+                  <div class="invalid-feedback">
+                    Please enter a valid email.
+                  </div>
+                  <div class="valid-feedback">
+                    Looks good!
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <label for="stravaInput" class="form-label">Strava Account</label>
+                  <input type="text" class="form-control" id="stravaInput" placeholder="Optional: link to your profile">
+                </div>
+                <div class="col-md-12">
+                  <label for="cityInput" class="form-label">City Suggestions</label>
+                  <input type="text" class="form-control" id="cityInput" placeholder="Optional: Any maps should I include?">
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-primary" type="submit">Submit</button>
+                </div>
+              </form>
+              <div id="submit-status">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <script>
+      // Example starter JavaScript for disabling form submissions if there are invalid fields
+      (function () {
+      'use strict'
+
+      // Fetch all the forms we want to apply custom Bootstrap validation styles to
+      var forms = document.querySelectorAll('.needs-validation')
+
+      // Loop over them and prevent submission
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              console.debug('Parameters invalid');
+            } else {
+              let email = document.getElementById('emailInput');
+              let strava = document.getElementById('stravaInput');
+              let cities = document.getElementById('cityInput');
+              console.log(email.value);
+              console.log(strava.value);
+              console.log(cities.value);
+
+              $('#submit-status').html(`
+                <div class="alert alert-success mt-3 hidden" role="alert">
+                  Submitted, thanks!
+                </div>`
+              );
+            }
+
+            form.classList.add('was-validated');
+
+            // Don't reload the page.
+            event.preventDefault();
+            event.stopPropagation();
+          }, false)
+        })
+    })()
+    </script>
+  </body>
+</html>
