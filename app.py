@@ -2,7 +2,7 @@ import logging
 from unittest.mock import DEFAULT
 import os
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 
 import python.firebase_api as db
 import python.strava_api as strava
@@ -247,6 +247,16 @@ def clear_coverage(map_id):
     logger.exception(e)
     return jsonify({'error': str(e)}), 300
 
+#===============================================================================
+
+@app.route('/.well-known/pki-validation/')
+def pki_validation():
+  """
+  For domain control validation (DCV).
+  """
+  return send_from_directory('static', '4C7445F7010C05FD590A0646065DC97F.txt')
+
+#===============================================================================
 
 if __name__ == "__main__":
   app.logger.setLevel(logging.DEBUG)
