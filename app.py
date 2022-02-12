@@ -249,12 +249,12 @@ def clear_coverage(map_id):
 
 #===============================================================================
 
-@app.route('/.well-known/pki-validation/')
-def pki_validation():
+@app.route('/.well-known/pki-validation/<file_name>')
+def pki_validation(file_name):
   """
   For domain control validation (DCV).
   """
-  return send_from_directory('static', '4C7445F7010C05FD590A0646065DC97F.txt')
+  return send_from_directory('static', file_name)
 
 #===============================================================================
 
