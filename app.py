@@ -1,5 +1,4 @@
 import logging
-from unittest.mock import DEFAULT
 import os
 
 from flask import Flask, render_template, jsonify, request, send_from_directory, jsonify
@@ -255,15 +254,6 @@ def clear_coverage(map_id):
   except Exception as e:
     logger.exception(e)
     return jsonify({'error': str(e)}), 300
-
-#===============================================================================
-
-@app.route('/.well-known/pki-validation/<file_name>')
-def pki_validation(file_name):
-  """
-  For domain control validation (DCV).
-  """
-  return send_from_directory('static', file_name)
 
 #===============================================================================
 

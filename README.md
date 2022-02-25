@@ -43,6 +43,22 @@ git push heroku main
 heroku logs --tail
 ```
 
+## :computer: AWS
+
+### Auto-Delete Logs on EC2 Instance
+```bash
+# SSH into the server
+ssh -i /path/to/key.pem ec2-user@X.X.X.X
+
+Once in the server, run:
+sudo su # to become the superuser. 
+
+# Confirm that there are no running crontabs with the command crontab -l.
+# Use the command crontab -e to edit the crontab jobs and schedule. Paste in the following commands:
+0 4 * * * truncate -s 0 /var/lib/docker/containers/**/*.log
+0 12 * * * docker system prune -a -f
+```
+
 ## :fire: Google Firebase
 
 https://console.firebase.google.com/u/2/project/runningheatmap-a5864/overview
