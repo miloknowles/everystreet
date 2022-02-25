@@ -2,7 +2,7 @@ import logging
 from unittest.mock import DEFAULT
 import os
 
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, render_template, jsonify, request, send_from_directory, jsonify
 
 import python.firebase_api as db
 import python.strava_api as strava
@@ -91,6 +91,15 @@ def render_test():
 
 #===============================================================================
 #============================= SERVER ACTIONS ==================================
+#===============================================================================
+
+@app.route('/healthcheck')
+def healthcheck():
+  """
+  For AWS load balancer.
+  """
+  return jsonify({'status': 'ok'})
+
 #===============================================================================
 
 @app.route('/action/pull-activities')
