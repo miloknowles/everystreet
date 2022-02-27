@@ -1,6 +1,6 @@
 # :runner: Running Every Street (in Cambridge)
 
-See the app [here](https://everystreet.herokuapp.com/).
+See the app [here](https://everystreet.run/).
 
 ![Cambridge street map](/static/cambridge.png)
 
@@ -26,28 +26,17 @@ curl -X POST https://www.strava.com/api/v3/oauth/token \
 
 Then you'll get a JSON response with a `refresh_token` and an `access_token`.
 
-## :computer: Heroku
-
-https://dashboard.heroku.com/apps/everystreet
-
-```bash
-# Run locally. This will load in the .env file variables.
-heroku local
-
-python app.py # If you want hot-reloading to work.
-
-# Deploys to the remote app on Heroku.
-git push heroku main
-
-# Check the logs.
-heroku logs --tail
-```
-
 ## :computer: AWS
+
+### Checking on Docker Container
+```bash
+docker ps                   # See running containers.
+docker logs container_name  # Check output from container.
+```
 
 ### Auto-Delete Logs on EC2 Instance
 ```bash
-# SSH into the server
+# SSH into the server.
 ssh -i /path/to/key.pem ec2-user@X.X.X.X
 
 Once in the server, run:
@@ -73,3 +62,20 @@ openssl base64 -in .serviceAccountKey.json -out firebaseConfigBase64.txt -A
 I downloaded the shapefile from [here](https://www.cambridgema.gov/GIS/gisdatadictionary/Boundary/BOUNDARY_CityBoundary).
 
 Convert using [this tool](http://ogre.adc4gis.com/), and make sure to specify `EPSG:4326` as the target SRS.
+
+## :computer: Heroku
+
+https://dashboard.heroku.com/apps/everystreet
+
+```bash
+# Run locally. This will load in the .env file variables.
+heroku local
+
+python app.py # If you want hot-reloading to work.
+
+# Deploys to the remote app on Heroku.
+git push heroku main
+
+# Check the logs.
+heroku logs --tail
+```

@@ -7,10 +7,10 @@
       "cpu": 192,
       "memory": 256,
       "entryPoint": ["gunicorn"],
-      "command": ["--log-level", "debug", "--bind", "0.0.0.0:5000", "app:app"],
+      "command": ["--log-level", "debug", "--bind", "0.0.0.0:80", "app:app"],
       "portMappings": [
         {
-            "containerPort": 5000,
+            "containerPort": 80,
             "hostPort": 0
         }
       ],
@@ -18,14 +18,6 @@
         {
           "name": "AWS_DEFAULT_REGION",
           "value": "us-east-1"
-        },
-        {
-          "name": "FLASK_ENV",
-          "value": "development"
-        },
-        {
-          "name": "FLASK_DEBUG",
-          "value": "1"
         }
       ],
       "essential": true
